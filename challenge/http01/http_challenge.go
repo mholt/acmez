@@ -10,7 +10,7 @@ import (
 	"github.com/mholt/acme/log"
 )
 
-type ValidateFunc func(core *api.Core, domain string, chlng acme.Challenge) error
+type ValidateFunc func(ctx context.Context, core *api.Core, domain string, chlng acme.Challenge) error
 
 // ChallengePath returns the URL path for the `http-01` challenge
 func ChallengePath(token string) string {
@@ -62,5 +62,5 @@ func (c *Challenge) Solve(ctx context.Context, authz acme.Authorization) error {
 	}()
 
 	chlng.KeyAuthorization = keyAuth
-	return c.validate(c.core, domain, chlng)
+	return c.validate(ctx, c.core, domain, chlng)
 }

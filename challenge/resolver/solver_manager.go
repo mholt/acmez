@@ -76,7 +76,7 @@ func (c *SolverManager) chooseSolver(authz acme.Authorization) solver {
 	return nil
 }
 
-func validate(core *api.Core, domain string, chlg acme.Challenge) error {
+func validate(ctx context.Context, core *api.Core, domain string, chlg acme.Challenge) error {
 	chlng, err := core.Challenges.New(chlg.URL)
 	if err != nil {
 		return fmt.Errorf("failed to initiate challenge: %w", err)
@@ -107,21 +107,17 @@ func validate(core *api.Core, domain string, chlg acme.Challenge) error {
 	bo.MaxInterval = 10 * initialInterval
 	bo.MaxElapsedTime = 100 * initialInterval
 
-	ctx, cancel := context.WithCancel(context.Background())
-
 	// After the path is sent, the ACME server will access our server.
 	// Repeatedly check the server for an updated status on our request.
 	operation := func() error {
 		authz, err := core.Authorizations.Get(chlng.AuthorizationURL)
 		if err != nil {
-			cancel()
-			return err
+			return backoff.Permanent(err)
 		}
 
 		valid, err := checkAuthorizationStatus(authz)
 		if err != nil {
-			cancel()
-			return err
+			return backoff.Permanent(err)
 		}
 
 		if valid {

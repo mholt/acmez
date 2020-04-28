@@ -24,7 +24,7 @@ func TestChallenge(t *testing.T) {
 
 	providerServer := NewProviderServer("", "23457")
 
-	validate := func(_ *api.Core, _ string, chlng acme.Challenge) error {
+	validate := func(_ context.Context, _ *api.Core, _ string, chlng acme.Challenge) error {
 		uri := "http://localhost" + providerServer.GetAddress() + ChallengePath(chlng.Token)
 
 		resp, err := http.DefaultClient.Get(uri)
@@ -81,7 +81,7 @@ func TestChallengeInvalidPort(t *testing.T) {
 	core, err := api.New(http.DefaultClient, "lego-test", apiURL+"/dir", "", privateKey)
 	require.NoError(t, err)
 
-	validate := func(_ *api.Core, _ string, _ acme.Challenge) error { return nil }
+	validate := func(_ context.Context, _ *api.Core, _ string, _ acme.Challenge) error { return nil }
 
 	solver := NewChallenge(core, validate, NewProviderServer("", "123456"))
 
@@ -264,7 +264,7 @@ func testServeWithProxy(t *testing.T, header, extra *testProxyHeader, expectErro
 		providerServer.SetProxyHeader(header.name)
 	}
 
-	validate := func(_ *api.Core, _ string, chlng acme.Challenge) error {
+	validate := func(_ context.Context, _ *api.Core, _ string, chlng acme.Challenge) error {
 		uri := "http://" + providerServer.GetAddress() + ChallengePath(chlng.Token)
 
 		req, err := http.NewRequest(http.MethodGet, uri, nil)

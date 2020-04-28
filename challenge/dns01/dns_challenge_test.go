@@ -55,13 +55,13 @@ func TestChallenge_PreSolve(t *testing.T) {
 	}{
 		{
 			desc:     "success",
-			validate: func(_ *api.Core, _ string, _ acme.Challenge) error { return nil },
+			validate: func(_ context.Context, _ *api.Core, _ string, _ acme.Challenge) error { return nil },
 			preCheck: func(_, _, _ string, _ PreCheckFunc) (bool, error) { return true, nil },
 			provider: &providerMock{},
 		},
 		{
 			desc:     "validate fail",
-			validate: func(_ *api.Core, _ string, _ acme.Challenge) error { return errors.New("OOPS") },
+			validate: func(_ context.Context, _ *api.Core, _ string, _ acme.Challenge) error { return errors.New("OOPS") },
 			preCheck: func(_, _, _ string, _ PreCheckFunc) (bool, error) { return true, nil },
 			provider: &providerMock{
 				present: nil,
@@ -70,7 +70,7 @@ func TestChallenge_PreSolve(t *testing.T) {
 		},
 		{
 			desc:     "preCheck fail",
-			validate: func(_ *api.Core, _ string, _ acme.Challenge) error { return nil },
+			validate: func(_ context.Context, _ *api.Core, _ string, _ acme.Challenge) error { return nil },
 			preCheck: func(_, _, _ string, _ PreCheckFunc) (bool, error) { return false, errors.New("OOPS") },
 			provider: &providerTimeoutMock{
 				timeout:  2 * time.Second,
@@ -79,7 +79,7 @@ func TestChallenge_PreSolve(t *testing.T) {
 		},
 		{
 			desc:     "present fail",
-			validate: func(_ *api.Core, _ string, _ acme.Challenge) error { return nil },
+			validate: func(_ context.Context, _ *api.Core, _ string, _ acme.Challenge) error { return nil },
 			preCheck: func(_, _, _ string, _ PreCheckFunc) (bool, error) { return true, nil },
 			provider: &providerMock{
 				present: errors.New("OOPS"),
@@ -88,7 +88,7 @@ func TestChallenge_PreSolve(t *testing.T) {
 		},
 		{
 			desc:     "cleanUp fail",
-			validate: func(_ *api.Core, _ string, _ acme.Challenge) error { return nil },
+			validate: func(_ context.Context, _ *api.Core, _ string, _ acme.Challenge) error { return nil },
 			preCheck: func(_, _, _ string, _ PreCheckFunc) (bool, error) { return true, nil },
 			provider: &providerMock{
 				cleanUp: errors.New("OOPS"),
@@ -138,13 +138,13 @@ func TestChallenge_Solve(t *testing.T) {
 	}{
 		{
 			desc:     "success",
-			validate: func(_ *api.Core, _ string, _ acme.Challenge) error { return nil },
+			validate: func(_ context.Context, _ *api.Core, _ string, _ acme.Challenge) error { return nil },
 			preCheck: func(_, _, _ string, _ PreCheckFunc) (bool, error) { return true, nil },
 			provider: &providerMock{},
 		},
 		{
 			desc:     "validate fail",
-			validate: func(_ *api.Core, _ string, _ acme.Challenge) error { return errors.New("OOPS") },
+			validate: func(_ context.Context, _ *api.Core, _ string, _ acme.Challenge) error { return errors.New("OOPS") },
 			preCheck: func(_, _, _ string, _ PreCheckFunc) (bool, error) { return true, nil },
 			provider: &providerMock{
 				present: nil,
@@ -154,7 +154,7 @@ func TestChallenge_Solve(t *testing.T) {
 		},
 		{
 			desc:     "preCheck fail",
-			validate: func(_ *api.Core, _ string, _ acme.Challenge) error { return nil },
+			validate: func(_ context.Context, _ *api.Core, _ string, _ acme.Challenge) error { return nil },
 			preCheck: func(_, _, _ string, _ PreCheckFunc) (bool, error) { return false, errors.New("OOPS") },
 			provider: &providerTimeoutMock{
 				timeout:  2 * time.Second,
@@ -164,7 +164,7 @@ func TestChallenge_Solve(t *testing.T) {
 		},
 		{
 			desc:     "present fail",
-			validate: func(_ *api.Core, _ string, _ acme.Challenge) error { return nil },
+			validate: func(_ context.Context, _ *api.Core, _ string, _ acme.Challenge) error { return nil },
 			preCheck: func(_, _, _ string, _ PreCheckFunc) (bool, error) { return true, nil },
 			provider: &providerMock{
 				present: errors.New("OOPS"),
@@ -172,7 +172,7 @@ func TestChallenge_Solve(t *testing.T) {
 		},
 		{
 			desc:     "cleanUp fail",
-			validate: func(_ *api.Core, _ string, _ acme.Challenge) error { return nil },
+			validate: func(_ context.Context, _ *api.Core, _ string, _ acme.Challenge) error { return nil },
 			preCheck: func(_, _, _ string, _ PreCheckFunc) (bool, error) { return true, nil },
 			provider: &providerMock{
 				cleanUp: errors.New("OOPS"),
@@ -226,13 +226,13 @@ func TestChallenge_CleanUp(t *testing.T) {
 	}{
 		{
 			desc:     "success",
-			validate: func(_ *api.Core, _ string, _ acme.Challenge) error { return nil },
+			validate: func(_ context.Context, _ *api.Core, _ string, _ acme.Challenge) error { return nil },
 			preCheck: func(_, _, _ string, _ PreCheckFunc) (bool, error) { return true, nil },
 			provider: &providerMock{},
 		},
 		{
 			desc:     "validate fail",
-			validate: func(_ *api.Core, _ string, _ acme.Challenge) error { return errors.New("OOPS") },
+			validate: func(_ context.Context, _ *api.Core, _ string, _ acme.Challenge) error { return errors.New("OOPS") },
 			preCheck: func(_, _, _ string, _ PreCheckFunc) (bool, error) { return true, nil },
 			provider: &providerMock{
 				present: nil,
@@ -241,7 +241,7 @@ func TestChallenge_CleanUp(t *testing.T) {
 		},
 		{
 			desc:     "preCheck fail",
-			validate: func(_ *api.Core, _ string, _ acme.Challenge) error { return nil },
+			validate: func(_ context.Context, _ *api.Core, _ string, _ acme.Challenge) error { return nil },
 			preCheck: func(_, _, _ string, _ PreCheckFunc) (bool, error) { return false, errors.New("OOPS") },
 			provider: &providerTimeoutMock{
 				timeout:  2 * time.Second,
@@ -250,7 +250,7 @@ func TestChallenge_CleanUp(t *testing.T) {
 		},
 		{
 			desc:     "present fail",
-			validate: func(_ *api.Core, _ string, _ acme.Challenge) error { return nil },
+			validate: func(_ context.Context, _ *api.Core, _ string, _ acme.Challenge) error { return nil },
 			preCheck: func(_, _, _ string, _ PreCheckFunc) (bool, error) { return true, nil },
 			provider: &providerMock{
 				present: errors.New("OOPS"),
@@ -258,7 +258,7 @@ func TestChallenge_CleanUp(t *testing.T) {
 		},
 		{
 			desc:     "cleanUp fail",
-			validate: func(_ *api.Core, _ string, _ acme.Challenge) error { return nil },
+			validate: func(_ context.Context, _ *api.Core, _ string, _ acme.Challenge) error { return nil },
 			preCheck: func(_, _, _ string, _ PreCheckFunc) (bool, error) { return true, nil },
 			provider: &providerMock{
 				cleanUp: errors.New("OOPS"),

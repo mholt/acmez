@@ -28,7 +28,7 @@ const (
 	DefaultTTL = 120
 )
 
-type ValidateFunc func(core *api.Core, domain string, chlng acme.Challenge) error
+type ValidateFunc func(ctx context.Context, core *api.Core, domain string, chlng acme.Challenge) error
 
 type ChallengeOption func(*Challenge) error
 
@@ -139,7 +139,7 @@ func (c *Challenge) Solve(ctx context.Context, authz acme.Authorization) error {
 	}
 
 	chlng.KeyAuthorization = keyAuth
-	return c.validate(c.core, domain, chlng)
+	return c.validate(ctx, c.core, domain, chlng)
 }
 
 // CleanUp cleans the challenge.
