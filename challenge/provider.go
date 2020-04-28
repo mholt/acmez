@@ -1,14 +1,24 @@
 package challenge
 
-import "time"
+import (
+	"context"
+	"time"
+)
+
+// Info contains information needed to solve a challenge.
+type Info struct {
+	Domain  string
+	Token   string
+	KeyAuth string
+}
 
 // Provider enables implementing a custom challenge
 // provider. Present presents the solution to a challenge available to
 // be solved. CleanUp will be called by the challenge if Present ends
 // in a non-error state.
 type Provider interface {
-	Present(domain, token, keyAuth string) error
-	CleanUp(domain, token, keyAuth string) error
+	Present(context.Context, Info) error
+	CleanUp(context.Context, Info) error
 }
 
 // ProviderTimeout allows for implementing a

@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"context"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -224,7 +225,7 @@ func TestChallengeHTTP_Client_Obtain(t *testing.T) {
 		Domains: []string{"acme.wtf"},
 		Bundle:  true,
 	}
-	resource, err := client.Certificate.Obtain(request)
+	resource, err := client.Certificate.Obtain(context.Background(), request)
 	require.NoError(t, err)
 
 	require.NotNil(t, resource)
@@ -267,7 +268,7 @@ func TestChallengeTLS_Client_Obtain(t *testing.T) {
 		Bundle:     true,
 		PrivateKey: privateKeyCSR,
 	}
-	resource, err := client.Certificate.Obtain(request)
+	resource, err := client.Certificate.Obtain(context.Background(), request)
 	require.NoError(t, err)
 
 	require.NotNil(t, resource)
@@ -307,7 +308,7 @@ func TestChallengeTLS_Client_ObtainForCSR(t *testing.T) {
 	csr, err := x509.ParseCertificateRequest(csrRaw)
 	require.NoError(t, err)
 
-	resource, err := client.Certificate.ObtainForCSR(*csr, true)
+	resource, err := client.Certificate.ObtainForCSR(context.Background(), *csr, true)
 	require.NoError(t, err)
 
 	require.NotNil(t, resource)

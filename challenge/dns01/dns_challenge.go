@@ -1,6 +1,7 @@
 package dns01
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
@@ -72,7 +73,7 @@ func NewChallenge(core *api.Core, validate ValidateFunc, provider challenge.Prov
 
 // PreSolve just submits the txt record to the dns provider.
 // It does not validate record propagation, or do anything at all with the acme server.
-func (c *Challenge) PreSolve(authz acme.Authorization) error {
+func (c *Challenge) PreSolve(ctx context.Context, authz acme.Authorization) error {
 	domain := challenge.GetTargetedDomain(authz)
 	log.Infof("[%s] acme: Preparing to solve DNS-01", domain)
 
@@ -91,7 +92,7 @@ func (c *Challenge) PreSolve(authz acme.Authorization) error {
 		return err
 	}
 
-	err = c.provider.Present(authz.Identifier.Value, chlng.Token, keyAuth)
+	err = c.provider.Present(ctx, challenge.Info{Domain: authz.Identifier.Value, Token: chlng.Token, KeyAuth: keyAuth})
 	if err != nil {
 		return fmt.Errorf("[%s] acme: error presenting token: %w", domain, err)
 	}
@@ -99,7 +100,7 @@ func (c *Challenge) PreSolve(authz acme.Authorization) error {
 	return nil
 }
 
-func (c *Challenge) Solve(authz acme.Authorization) error {
+func (c *Challenge) Solve(ctx context.Context, authz acme.Authorization) error {
 	domain := challenge.GetTargetedDomain(authz)
 	log.Infof("[%s] acme: Trying to solve DNS-01", domain)
 
@@ -142,7 +143,7 @@ func (c *Challenge) Solve(authz acme.Authorization) error {
 }
 
 // CleanUp cleans the challenge.
-func (c *Challenge) CleanUp(authz acme.Authorization) error {
+func (c *Challenge) CleanUp(ctx context.Context, authz acme.Authorization) error {
 	log.Infof("[%s] acme: Cleaning DNS-01 challenge", challenge.GetTargetedDomain(authz))
 
 	chlng, err := challenge.FindChallenge(challenge.DNS01, authz)
@@ -155,7 +156,7 @@ func (c *Challenge) CleanUp(authz acme.Authorization) error {
 		return err
 	}
 
-	return c.provider.CleanUp(authz.Identifier.Value, chlng.Token, keyAuth)
+	return c.provider.CleanUp(ctx, challenge.Info{Domain: authz.Identifier.Value, Token: chlng.Token, KeyAuth: keyAuth})
 }
 
 func (c *Challenge) Sequential() (bool, time.Duration) {

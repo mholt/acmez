@@ -1,12 +1,14 @@
 package tlsalpn01
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
 	"strings"
 
+	"github.com/mholt/acme/challenge"
 	"github.com/mholt/acme/log"
 )
 
@@ -41,14 +43,14 @@ func (s *ProviderServer) GetAddress() string {
 
 // Present generates a certificate with a SHA-256 digest of the keyAuth provided
 // as the acmeValidation-v1 extension value to conform to the ACME-TLS-ALPN spec.
-func (s *ProviderServer) Present(domain, token, keyAuth string) error {
+func (s *ProviderServer) Present(_ context.Context, info challenge.Info) error {
 	if s.port == "" {
 		// Fallback to port 443 if the port was not provided.
 		s.port = defaultTLSPort
 	}
 
 	// Generate the challenge certificate using the provided keyAuth and domain.
-	cert, err := ChallengeCert(domain, keyAuth)
+	cert, err := ChallengeCert(info.Domain, info.KeyAuth)
 	if err != nil {
 		return err
 	}
@@ -81,7 +83,7 @@ func (s *ProviderServer) Present(domain, token, keyAuth string) error {
 }
 
 // CleanUp closes the HTTPS server.
-func (s *ProviderServer) CleanUp(domain, token, keyAuth string) error {
+func (s *ProviderServer) CleanUp(_ context.Context, info challenge.Info) error {
 	if s.listener == nil {
 		return nil
 	}

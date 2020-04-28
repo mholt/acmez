@@ -1,12 +1,14 @@
 package http01
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
 	"net/textproto"
 	"strings"
 
+	"github.com/mholt/acme/challenge"
 	"github.com/mholt/acme/log"
 )
 
@@ -33,7 +35,7 @@ func NewProviderServer(iface, port string) *ProviderServer {
 }
 
 // Present starts a web server and makes the token available at `ChallengePath(token)` for web requests.
-func (s *ProviderServer) Present(domain, token, keyAuth string) error {
+func (s *ProviderServer) Present(_ context.Context, info challenge.Info) error {
 	var err error
 	s.listener, err = net.Listen("tcp", s.GetAddress())
 	if err != nil {
@@ -41,7 +43,7 @@ func (s *ProviderServer) Present(domain, token, keyAuth string) error {
 	}
 
 	s.done = make(chan bool)
-	go s.serve(domain, token, keyAuth)
+	go s.serve(info.Domain, info.Token, info.KeyAuth)
 	return nil
 }
 
@@ -50,7 +52,7 @@ func (s *ProviderServer) GetAddress() string {
 }
 
 // CleanUp closes the HTTP server and removes the token from `ChallengePath(token)`
-func (s *ProviderServer) CleanUp(domain, token, keyAuth string) error {
+func (s *ProviderServer) CleanUp(_ context.Context, _ challenge.Info) error {
 	if s.listener == nil {
 		return nil
 	}

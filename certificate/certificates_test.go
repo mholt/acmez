@@ -1,6 +1,7 @@
 package certificate
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/pem"
@@ -238,6 +239,6 @@ type resolverMock struct {
 	error error
 }
 
-func (r *resolverMock) Solve(authorizations []acme.Authorization) error {
+func (r *resolverMock) Solve(ctx context.Context, authorizations []acme.Authorization) error {
 	return r.error
 }

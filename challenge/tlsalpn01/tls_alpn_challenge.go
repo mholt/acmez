@@ -1,6 +1,7 @@
 package tlsalpn01
 
 import (
+	"context"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/tls"
@@ -40,7 +41,7 @@ func (c *Challenge) SetProvider(provider challenge.Provider) {
 }
 
 // Solve manages the provider to validate and solve the challenge.
-func (c *Challenge) Solve(authz acme.Authorization) error {
+func (c *Challenge) Solve(ctx context.Context, authz acme.Authorization) error {
 	domain := authz.Identifier.Value
 	log.Infof("[%s] acme: Trying to solve TLS-ALPN-01", challenge.GetTargetedDomain(authz))
 
@@ -55,12 +56,12 @@ func (c *Challenge) Solve(authz acme.Authorization) error {
 		return err
 	}
 
-	err = c.provider.Present(domain, chlng.Token, keyAuth)
+	err = c.provider.Present(ctx, challenge.Info{Domain: domain, Token: chlng.Token, KeyAuth: keyAuth})
 	if err != nil {
 		return fmt.Errorf("[%s] acme: error presenting token: %w", challenge.GetTargetedDomain(authz), err)
 	}
 	defer func() {
-		err := c.provider.CleanUp(domain, chlng.Token, keyAuth)
+		err := c.provider.CleanUp(ctx, challenge.Info{Domain: domain, Token: chlng.Token, KeyAuth: keyAuth})
 		if err != nil {
 			log.Warnf("[%s] acme: cleaning up failed: %v", challenge.GetTargetedDomain(authz), err)
 		}

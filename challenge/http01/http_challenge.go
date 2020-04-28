@@ -1,6 +1,7 @@
 package http01
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/mholt/acme/acme"
@@ -34,7 +35,7 @@ func (c *Challenge) SetProvider(provider challenge.Provider) {
 	c.provider = provider
 }
 
-func (c *Challenge) Solve(authz acme.Authorization) error {
+func (c *Challenge) Solve(ctx context.Context, authz acme.Authorization) error {
 	domain := challenge.GetTargetedDomain(authz)
 	log.Infof("[%s] acme: Trying to solve HTTP-01", domain)
 
@@ -49,12 +50,12 @@ func (c *Challenge) Solve(authz acme.Authorization) error {
 		return err
 	}
 
-	err = c.provider.Present(authz.Identifier.Value, chlng.Token, keyAuth)
+	err = c.provider.Present(ctx, challenge.Info{Domain: authz.Identifier.Value, Token: chlng.Token, KeyAuth: keyAuth})
 	if err != nil {
 		return fmt.Errorf("[%s] acme: error presenting token: %w", domain, err)
 	}
 	defer func() {
-		err := c.provider.CleanUp(authz.Identifier.Value, chlng.Token, keyAuth)
+		err := c.provider.CleanUp(ctx, challenge.Info{Domain: authz.Identifier.Value, Token: chlng.Token, KeyAuth: keyAuth})
 		if err != nil {
 			log.Warnf("[%s] acme: cleaning up failed: %v", domain, err)
 		}

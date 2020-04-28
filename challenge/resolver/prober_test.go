@@ -1,6 +1,7 @@
 package resolver
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -107,7 +108,7 @@ func TestProber_Solve(t *testing.T) {
 				solverManager: &SolverManager{solvers: test.solvers},
 			}
 
-			err := prober.Solve(test.authz)
+			err := prober.Solve(context.Background(), test.authz)
 			if test.expectedError != "" {
 				require.EqualError(t, err, test.expectedError)
 			} else {

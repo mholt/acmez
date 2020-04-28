@@ -1,6 +1,7 @@
 package http01
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"fmt"
@@ -66,7 +67,7 @@ func TestChallenge(t *testing.T) {
 		},
 	}
 
-	err = solver.Solve(authz)
+	err = solver.Solve(context.Background(), authz)
 	require.NoError(t, err)
 }
 
@@ -93,7 +94,7 @@ func TestChallengeInvalidPort(t *testing.T) {
 		},
 	}
 
-	err = solver.Solve(authz)
+	err = solver.Solve(context.Background(), authz)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid port")
 	assert.Contains(t, err.Error(), "123456")
@@ -313,7 +314,7 @@ func testServeWithProxy(t *testing.T, header, extra *testProxyHeader, expectErro
 		},
 	}
 
-	err = solver.Solve(authz)
+	err = solver.Solve(context.Background(), authz)
 	if expectError {
 		require.Error(t, err)
 	} else {

@@ -1,6 +1,7 @@
 package dns01
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"errors"
@@ -19,17 +20,21 @@ type providerMock struct {
 	present, cleanUp error
 }
 
-func (p *providerMock) Present(domain, token, keyAuth string) error { return p.present }
-func (p *providerMock) CleanUp(domain, token, keyAuth string) error { return p.cleanUp }
+func (p *providerMock) Present(ctx context.Context, info challenge.Info) error { return p.present }
+func (p *providerMock) CleanUp(ctx context.Context, info challenge.Info) error { return p.cleanUp }
 
 type providerTimeoutMock struct {
 	present, cleanUp  error
 	timeout, interval time.Duration
 }
 
-func (p *providerTimeoutMock) Present(domain, token, keyAuth string) error { return p.present }
-func (p *providerTimeoutMock) CleanUp(domain, token, keyAuth string) error { return p.cleanUp }
-func (p *providerTimeoutMock) Timeout() (time.Duration, time.Duration)     { return p.timeout, p.interval }
+func (p *providerTimeoutMock) Present(ctx context.Context, info challenge.Info) error {
+	return p.present
+}
+func (p *providerTimeoutMock) CleanUp(ctx context.Context, info challenge.Info) error {
+	return p.cleanUp
+}
+func (p *providerTimeoutMock) Timeout() (time.Duration, time.Duration) { return p.timeout, p.interval }
 
 func TestChallenge_PreSolve(t *testing.T) {
 	_, apiURL, tearDown := tester.SetupFakeAPI()
@@ -104,7 +109,7 @@ func TestChallenge_PreSolve(t *testing.T) {
 				},
 			}
 
-			err = chlg.PreSolve(authz)
+			err = chlg.PreSolve(context.Background(), authz)
 			if test.expectError {
 				require.Error(t, err)
 			} else {
@@ -192,7 +197,7 @@ func TestChallenge_Solve(t *testing.T) {
 				},
 			}
 
-			err = chlg.Solve(authz)
+			err = chlg.Solve(context.Background(), authz)
 			if test.expectError {
 				require.Error(t, err)
 			} else {
@@ -275,7 +280,7 @@ func TestChallenge_CleanUp(t *testing.T) {
 				},
 			}
 
-			err = chlg.CleanUp(authz)
+			err = chlg.CleanUp(context.Background(), authz)
 			if test.expectError {
 				require.Error(t, err)
 			} else {

@@ -2,6 +2,7 @@ package certificate
 
 import (
 	"bytes"
+	"context"
 	"crypto"
 	"crypto/x509"
 	"encoding/base64"
@@ -58,7 +59,7 @@ type ObtainRequest struct {
 }
 
 type resolver interface {
-	Solve(authorizations []acme.Authorization) error
+	Solve(ctx context.Context, authorizations []acme.Authorization) error
 }
 
 type CertifierOptions struct {
@@ -86,7 +87,7 @@ func NewCertifier(core *api.Core, resolver resolver, options CertifierOptions) *
 //
 // This function will never return a partial certificate.
 // If one domain in the list fails, the whole certificate will fail.
-func (c *Certifier) Obtain(request ObtainRequest) (*Resource, error) {
+func (c *Certifier) Obtain(ctx context.Context, request ObtainRequest) (*Resource, error) {
 	if len(request.Domains) == 0 {
 		return nil, errors.New("no domains to obtain a certificate for")
 	}
@@ -111,7 +112,7 @@ func (c *Certifier) Obtain(request ObtainRequest) (*Resource, error) {
 		return nil, err
 	}
 
-	err = c.resolver.Solve(authz)
+	err = c.resolver.Solve(ctx, authz)
 	if err != nil {
 		// If any challenge fails, return. Do not generate partial SAN certificates.
 		c.deactivateAuthorizations(order)
@@ -145,7 +146,7 @@ func (c *Certifier) Obtain(request ObtainRequest) (*Resource, error) {
 //
 // This function will never return a partial certificate.
 // If one domain in the list fails, the whole certificate will fail.
-func (c *Certifier) ObtainForCSR(csr x509.CertificateRequest, bundle bool) (*Resource, error) {
+func (c *Certifier) ObtainForCSR(ctx context.Context, csr x509.CertificateRequest, bundle bool) (*Resource, error) {
 	// figure out what domains it concerns
 	// start with the common name
 	domains := certcrypto.ExtractDomainsCSR(&csr)
@@ -168,7 +169,7 @@ func (c *Certifier) ObtainForCSR(csr x509.CertificateRequest, bundle bool) (*Res
 		return nil, err
 	}
 
-	err = c.resolver.Solve(authz)
+	err = c.resolver.Solve(ctx, authz)
 	if err != nil {
 		// If any challenge fails, return. Do not generate partial SAN certificates.
 		c.deactivateAuthorizations(order)
@@ -337,7 +338,7 @@ func (c *Certifier) Revoke(cert []byte) error {
 // If bundle is true, the []byte contains both the issuer certificate and your issued certificate as a bundle.
 //
 // For private key reuse the PrivateKey property of the passed in Resource should be non-nil.
-func (c *Certifier) Renew(certRes Resource, bundle, mustStaple bool) (*Resource, error) {
+func (c *Certifier) Renew(ctx context.Context, certRes Resource, bundle, mustStaple bool) (*Resource, error) {
 	// Input certificate is PEM encoded.
 	// Decode it here as we may need the decoded cert later on in the renewal process.
 	// The input may be a bundle or a single certificate.
@@ -364,7 +365,7 @@ func (c *Certifier) Renew(certRes Resource, bundle, mustStaple bool) (*Resource,
 			return nil, errP
 		}
 
-		return c.ObtainForCSR(*csr, bundle)
+		return c.ObtainForCSR(ctx, *csr, bundle)
 	}
 
 	var privateKey crypto.PrivateKey
@@ -381,7 +382,7 @@ func (c *Certifier) Renew(certRes Resource, bundle, mustStaple bool) (*Resource,
 		PrivateKey: privateKey,
 		MustStaple: mustStaple,
 	}
-	return c.Obtain(query)
+	return c.Obtain(ctx, query)
 }
 
 // GetOCSP takes a PEM encoded cert or cert bundle returning the raw OCSP response,
