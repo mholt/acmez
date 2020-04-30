@@ -139,7 +139,7 @@ func TestFindZoneByFqdnCustom(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ClearFqdnCache()
 
-			zone, err := FindZoneByFqdnCustom(test.fqdn, test.nameservers)
+			zone, err := findZoneByFQDNCustom(test.fqdn, test.nameservers)
 			if test.expectedError != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), test.expectedError)

@@ -97,7 +97,7 @@ func ParseNameservers(servers []string) []string {
 func lookupNameservers(fqdn string) ([]string, error) {
 	var authoritativeNss []string
 
-	zone, err := FindZoneByFqdn(fqdn)
+	zone, err := FindZoneByFQDN(fqdn)
 	if err != nil {
 		return nil, fmt.Errorf("could not determine the zone: %w", err)
 	}
@@ -135,15 +135,15 @@ func FindPrimaryNsByFqdnCustom(fqdn string, nameservers []string) (string, error
 	return soa.primaryNs, nil
 }
 
-// FindZoneByFqdn determines the zone apex for the given fqdn
+// FindZoneByFQDN determines the zone apex for the given fqdn
 // by recursing up the domain labels until the nameserver returns a SOA record in the answer section.
-func FindZoneByFqdn(fqdn string) (string, error) {
-	return FindZoneByFqdnCustom(fqdn, recursiveNameservers)
+func FindZoneByFQDN(fqdn string) (string, error) {
+	return findZoneByFQDNCustom(fqdn, recursiveNameservers)
 }
 
-// FindZoneByFqdnCustom determines the zone apex for the given fqdn
+// findZoneByFQDNCustom determines the zone apex for the given fqdn
 // by recursing up the domain labels until the nameserver returns a SOA record in the answer section.
-func FindZoneByFqdnCustom(fqdn string, nameservers []string) (string, error) {
+func findZoneByFQDNCustom(fqdn string, nameservers []string) (string, error) {
 	soa, err := lookupSoaByFqdn(fqdn, nameservers)
 	if err != nil {
 		return "", err
@@ -152,6 +152,10 @@ func FindZoneByFqdnCustom(fqdn string, nameservers []string) (string, error) {
 }
 
 func lookupSoaByFqdn(fqdn string, nameservers []string) (*soaCacheEntry, error) {
+	if !strings.HasSuffix(fqdn, ".") {
+		fqdn += "."
+	}
+
 	muFqdnSoaCache.Lock()
 	defer muFqdnSoaCache.Unlock()
 

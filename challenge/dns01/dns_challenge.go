@@ -115,7 +115,7 @@ func (c *Challenge) Solve(ctx context.Context, authz acme.Authorization) error {
 		return err
 	}
 
-	fqdn, value := GetRecord(authz.Identifier.Value, keyAuth)
+	fqdn, value := getTXTRecord(authz.Identifier.Value, keyAuth)
 
 	var timeout, interval time.Duration
 	switch provider := c.provider.(type) {
@@ -170,13 +170,15 @@ type sequential interface {
 	Sequential() time.Duration
 }
 
-// GetRecord returns a DNS record which will fulfill the `dns-01` challenge
-func GetRecord(domain, keyAuth string) (fqdn string, value string) {
+func getTXTRecordValue(keyAuth string) string {
 	keyAuthShaBytes := sha256.Sum256([]byte(keyAuth))
 	// base64URL encoding without padding
-	value = base64.RawURLEncoding.EncodeToString(keyAuthShaBytes[:sha256.Size])
-	fqdn = fmt.Sprintf("_acme-challenge.%s.", domain)
+	return base64.RawURLEncoding.EncodeToString(keyAuthShaBytes[:sha256.Size])
+}
 
+func getTXTRecordFQDN(domain string) string {
+	fqdn := fmt.Sprintf("_acme-challenge.%s.", domain)
+	// TODO: get rid of env var shenanigans
 	if ok, _ := strconv.ParseBool(os.Getenv("LEGO_EXPERIMENTAL_CNAME_SUPPORT")); ok {
 		r, err := dnsQuery(fqdn, dns.TypeCNAME, recursiveNameservers, true)
 		// Check if the domain has CNAME then return that
@@ -184,6 +186,11 @@ func GetRecord(domain, keyAuth string) (fqdn string, value string) {
 			fqdn = updateDomainWithCName(r, fqdn)
 		}
 	}
+	return fqdn
+}
 
-	return
+// getRecord returns a DNS record which will fulfill the `dns-01` challenge
+// TODO: why not just return a libdns.Record...
+func getTXTRecord(domain, keyAuth string) (fqdn string, value string) {
+	return getTXTRecordFQDN(domain), getTXTRecordValue(keyAuth)
 }

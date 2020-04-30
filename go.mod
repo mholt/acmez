@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/cenkalti/backoff/v4 v4.0.2
+	github.com/libdns/libdns v0.0.0-20200430050049-f0d5b564b6b3
 	github.com/miekg/dns v1.1.29
 	github.com/stretchr/testify v1.5.1
 	golang.org/x/crypto v0.0.0-20200427165652-729f1e841bcc

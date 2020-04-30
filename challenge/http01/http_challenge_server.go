@@ -43,7 +43,7 @@ func (s *ProviderServer) Present(_ context.Context, info challenge.Info) error {
 	}
 
 	s.done = make(chan bool)
-	go s.serve(info.Domain, info.Token, info.KeyAuth)
+	go s.serve(info)
 	return nil
 }
 
@@ -84,22 +84,22 @@ func (s *ProviderServer) SetProxyHeader(headerName string) {
 	}
 }
 
-func (s *ProviderServer) serve(domain, token, keyAuth string) {
-	path := ChallengePath(token)
+func (s *ProviderServer) serve(info challenge.Info) {
+	path := ChallengePath(info.Token)
 
 	// The incoming request must will be validated to prevent DNS rebind attacks.
 	// We only respond with the keyAuth, when we're receiving a GET requests with
 	// the "Host" header matching the domain (the latter is configurable though SetProxyHeader).
 	mux := http.NewServeMux()
 	mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet && s.matcher.matches(r, domain) {
+		if r.Method == http.MethodGet && s.matcher.matches(r, info.Domain) {
 			w.Header().Add("Content-Type", "text/plain")
-			_, err := w.Write([]byte(keyAuth))
+			_, err := w.Write([]byte(info.KeyAuth))
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			log.Infof("[%s] Served key authentication", domain)
+			log.Infof("[%s] Served key authentication", info.Domain)
 		} else {
 			log.Warnf("Received request for domain %s with method %s but the domain did not match any challenge. Please ensure your are passing the %s header properly.", r.Host, r.Method, s.matcher.name())
 			_, err := w.Write([]byte("TEST"))
