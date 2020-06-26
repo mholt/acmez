@@ -54,6 +54,8 @@ func (s *Solver) Present(ctx context.Context, info challenge.Info) error {
 	s.txtRecords[info.KeyAuth] = results[0]
 	s.txtRecordsMu.Unlock()
 
+	// TODO: according to config, check for record propagation before continuing?
+
 	return nil
 }
 
