@@ -38,9 +38,8 @@ import (
 
 // Client facilitates ACME client operations as defined by the spec.
 //
-// It is recommended that clients be reused so as to preserve their
-// internal state (such as the ACME directory). Because the client
-// is synchronized for concurrent use, it should not be copied.
+// Because the client is synchronized for concurrent use, it should
+// not be copied.
 //
 // Many errors that are returned by a Client are likely to be of type
 // Problem as long as the ACME server returns a structured error
@@ -75,8 +74,18 @@ type Client struct {
 	Logger *zap.Logger
 
 	mu     sync.Mutex // protects all unexported fields
-	dir    directory
+	dir    Directory
 	nonces *stack
+}
+
+// GetDirectory retrieves the directory configured at c.Directory. It is
+// NOT necessary to call this to provision the client. It is only useful
+// if you want to access a copy of the directory yourself.
+func (c *Client) GetDirectory(ctx context.Context) (Directory, error) {
+	if err := c.provision(ctx); err != nil {
+		return Directory{}, err
+	}
+	return c.dir, nil
 }
 
 func (c *Client) provision(ctx context.Context) error {
@@ -109,7 +118,7 @@ func (c *Client) provisionDirectory(ctx context.Context) error {
 	defer directoriesMu.Unlock()
 	if dir, ok := directories[c.Directory]; ok {
 		if time.Since(dir.retrieved) < 12*time.Hour {
-			c.dir = dir.directory
+			c.dir = dir.Directory
 			return nil
 		}
 	}
@@ -153,24 +162,24 @@ func (c *Client) pollTimeout() time.Duration {
 	return c.PollTimeout
 }
 
-// directory acts as an index for the ACME server, as
+// Directory acts as an index for the ACME server as
 // specified in the spec: "In order to help clients
 // configure themselves with the right URLs for each
 // ACME operation, ACME servers provide a directory
 // object." §7.1.1
-type directory struct {
+type Directory struct {
 	NewNonce   string         `json:"newNonce"`
 	NewAccount string         `json:"newAccount"`
 	NewOrder   string         `json:"newOrder"`
 	NewAuthz   string         `json:"newAuthz,omitempty"`
 	RevokeCert string         `json:"revokeCert"`
 	KeyChange  string         `json:"keyChange"`
-	Meta       *directoryMeta `json:"meta,omitempty"`
+	Meta       *DirectoryMeta `json:"meta,omitempty"`
 }
 
-// directoryMeta is optional extra data that may be
+// DirectoryMeta is optional extra data that may be
 // included in an ACME server directory. §7.1.1
-type directoryMeta struct {
+type DirectoryMeta struct {
 	TermsOfService          string   `json:"termsOfService,omitempty"`
 	Website                 string   `json:"website,omitempty"`
 	CAAIdentities           []string `json:"caaIdentities,omitempty"`
@@ -217,7 +226,7 @@ var (
 )
 
 type cachedDirectory struct {
-	directory
+	Directory
 	retrieved time.Time
 }
 
