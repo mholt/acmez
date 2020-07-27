@@ -28,6 +28,10 @@ import (
 	"github.com/mholt/acmez/acme"
 )
 
+// Run pebble (the ACME server) before running this example:
+//
+// PEBBLE_VA_ALWAYS_VALID=1 pebble -config ./test/config/pebble-config.json -strict
+
 func main() {
 	err := lowLevelExample()
 	if err != nil {
@@ -36,10 +40,6 @@ func main() {
 }
 
 func lowLevelExample() error {
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{
-		InsecureSkipVerify: true,
-	}
-
 	// put your domains here
 	domains := []string{"example.com"}
 
@@ -79,7 +79,14 @@ func lowLevelExample() error {
 
 	// now we can make our low-level ACME client
 	client := &acme.Client{
-		Directory: "https://127.0.0.1:14000/dir",
+		Directory: "https://127.0.0.1:14000/dir", // default pebble endpoint
+		HTTPClient: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true, // we're just tinkering locally
+				},
+			},
+		},
 	}
 
 	// if the account is new, we need to create it; only do this once!

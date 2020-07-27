@@ -28,6 +28,10 @@ import (
 	"github.com/mholt/acmez/acme"
 )
 
+// Run pebble (the ACME server) before running this example:
+//
+// PEBBLE_VA_ALWAYS_VALID=1 pebble -config ./test/config/pebble-config.json -strict
+
 func main() {
 	err := highLevelExample()
 	if err != nil {
@@ -36,10 +40,6 @@ func main() {
 }
 
 func highLevelExample() error {
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{
-		InsecureSkipVerify: true,
-	}
-
 	// Put your domains here
 	domains := []string{"example.com"}
 
@@ -61,12 +61,19 @@ func highLevelExample() error {
 	// example.
 	client := acmez.Client{
 		Client: &acme.Client{
-			Directory: "https://127.0.0.1:14000/dir",
+			Directory: "https://127.0.0.1:14000/dir", // default pebble endpoint
+			HTTPClient: &http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{
+						InsecureSkipVerify: true, // we're just tinkering locally
+					},
+				},
+			},
 		},
 		ChallengeSolvers: map[string]acmez.Solver{
-			acme.ChallengeTypeHTTP01:    mySolver{}, // TODO: provide these!
-			acme.ChallengeTypeDNS01:     mySolver{}, // TODO: provide these!
-			acme.ChallengeTypeTLSALPN01: mySolver{}, // TODO: provide these!
+			acme.ChallengeTypeHTTP01:    mySolver{}, // provide these!
+			acme.ChallengeTypeDNS01:     mySolver{}, // provide these!
+			acme.ChallengeTypeTLSALPN01: mySolver{}, // provide these!
 		},
 	}
 
