@@ -73,7 +73,7 @@ func TLSALPN01ChallengeCert(challenge acme.Challenge) (*tls.Certificate, error) 
 			},
 		},
 	}
-	challengeCertDER, err := x509.CreateCertificate(rand.Reader, &template, &template, certKey.PublicKey, certKey)
+	challengeCertDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &certKey.PublicKey, certKey)
 	if err != nil {
 		return nil, err
 	}

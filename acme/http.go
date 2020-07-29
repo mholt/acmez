@@ -106,7 +106,7 @@ func (c *Client) httpPostJWS(ctx context.Context, privateKey crypto.Signer,
 
 		// internal server errors *could* just be a hiccup and it may be worth
 		// trying again, but not nearly so many times as for other reasons
-		if resp.StatusCode >= 500 {
+		if resp != nil && resp.StatusCode >= 500 {
 			internalServerErrors++
 			if internalServerErrors < maxInternalServerErrors {
 				continue
@@ -268,10 +268,12 @@ func (c *Client) doHTTPRequest(req *http.Request, buf *bytes.Buffer) (resp *http
 	defer resp.Body.Close()
 
 	if c.Logger != nil {
-		c.Logger.Debug("response",
+		c.Logger.Debug("http request",
+			zap.String("method", req.Method),
+			zap.String("url", req.URL.String()),
+			zap.Reflect("headers", req.Header),
 			zap.Int("status_code", resp.StatusCode),
-			zap.String("status", resp.Status),
-			zap.Reflect("headers", resp.Header))
+			zap.Reflect("response_headers", resp.Header))
 	}
 
 	// "The server MUST include a Replay-Nonce header field
