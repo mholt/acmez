@@ -212,6 +212,9 @@ func (c *Client) solveChallenges(ctx context.Context, account acme.Account, orde
 		if err != nil {
 			return err
 		}
+		if authz.Status == acme.StatusValid {
+			continue
+		}
 
 		// we'll be shuffling and splicing the list of challenges, and we don't
 		// don't want to affect the original list so make a copy
