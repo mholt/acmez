@@ -69,6 +69,15 @@ type Authorization struct {
 	Location string `json:"-"`
 }
 
+// IdentifierValue returns the Identifier.Value field, adjusted
+// according to the Wildcard field.
+func (authz Authorization) IdentifierValue() string {
+	if authz.Wildcard {
+		return "*." + authz.Identifier.Value
+	}
+	return authz.Identifier.Value
+}
+
 // fillChallengeFields populates extra fields in the challenge structs so that
 // challenges can be solved without needing a bunch of unnecessary extra state.
 func (authz *Authorization) fillChallengeFields(account Account) error {

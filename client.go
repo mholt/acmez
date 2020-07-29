@@ -139,12 +139,12 @@ func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Acc
 			authz := problem.Resource.(acme.Authorization)
 			if c.Logger != nil {
 				c.Logger.Error("validating authorization",
-					zap.String("identifier", authz.Identifier.Value),
+					zap.String("identifier", authz.IdentifierValue()),
 					zap.Error(err),
 					zap.Int("attempt", attempt),
 					zap.Int("max_attempts", maxAttempts))
 			}
-			err = fmt.Errorf("solving challenge: %s: %w", authz.Identifier.Value, err)
+			err = fmt.Errorf("solving challenge: %s: %w", authz.IdentifierValue(), err)
 			if errors.As(err, &retryableErr{}) {
 				continue
 			}
@@ -292,7 +292,7 @@ func (c *Client) solveChallenges(ctx context.Context, account acme.Account, orde
 			if err := authz.currentSolver.CleanUp(ctx, authz.currentChallenge); err != nil {
 				if c.Logger != nil {
 					c.Logger.Error("cleaning up solver",
-						zap.String("identifier", authz.Identifier.Value),
+						zap.String("identifier", authz.IdentifierValue()),
 						zap.String("challenge_type", authz.currentChallenge.Type),
 						zap.Error(err))
 				}
@@ -314,7 +314,7 @@ func (c *Client) solveChallenges(ctx context.Context, account acme.Account, orde
 			if err != nil {
 				if c.Logger != nil {
 					c.Logger.Error("deactivating authorization",
-						zap.String("identifier", authz.Identifier.Value),
+						zap.String("identifier", authz.IdentifierValue()),
 						zap.String("authz", authz.Location),
 						zap.Error(err))
 				}
@@ -361,7 +361,7 @@ func (c *Client) presentForNextChallenge(ctx context.Context, authz *authzState)
 	if authz.Status != acme.StatusPending {
 		if authz.Status == acme.StatusValid && c.Logger != nil {
 			c.Logger.Info("authorization already valid",
-				zap.String("identifier", authz.Identifier.Value),
+				zap.String("identifier", authz.IdentifierValue()),
 				zap.String("authz_url", authz.Location),
 				zap.Time("expires", authz.Expires))
 		}
@@ -375,7 +375,7 @@ func (c *Client) presentForNextChallenge(ctx context.Context, authz *authzState)
 
 	if c.Logger != nil {
 		c.Logger.Info("trying to solve challenge",
-			zap.String("identifier", authz.Identifier.Value),
+			zap.String("identifier", authz.IdentifierValue()),
 			zap.String("challenge_type", authz.currentChallenge.Type))
 	}
 
@@ -413,7 +413,7 @@ func (c *Client) initiateCurrentChallenge(ctx context.Context, authz *authzState
 
 	if c.Logger != nil {
 		c.Logger.Debug("challenge accepted",
-			zap.String("identifier", authz.Identifier.Value),
+			zap.String("identifier", authz.IdentifierValue()),
 			zap.String("challenge_type", authz.currentChallenge.Type))
 	}
 
@@ -446,7 +446,7 @@ func (c *Client) nextChallenge(authz *authzState) error {
 		}
 	}
 	return fmt.Errorf("%s: no solvers available for remaining challenges (configured=%v offered=%v remaining=%v)",
-		authz.Identifier.Value, c.enabledChallengeTypes(), authz.listOfferedChallenges(), authz.listRemainingChallenges())
+		authz.IdentifierValue(), c.enabledChallengeTypes(), authz.listOfferedChallenges(), authz.listRemainingChallenges())
 }
 
 func (c *Client) pollAuthorization(ctx context.Context, account acme.Account, authz *authzState, failedChallengeTypes failedChallengeMap) error {
@@ -479,7 +479,7 @@ func (c *Client) pollAuthorization(ctx context.Context, account acme.Account, au
 		cleanupErr := authz.currentSolver.CleanUp(ctx, authz.currentChallenge)
 		if cleanupErr != nil && c.Logger != nil {
 			c.Logger.Error("cleaning up solver",
-				zap.String("identifier", authz.Identifier.Value),
+				zap.String("identifier", authz.IdentifierValue()),
 				zap.String("challenge_type", authz.currentChallenge.Type),
 				zap.Error(err))
 		}
@@ -492,7 +492,7 @@ func (c *Client) pollAuthorization(ctx context.Context, account acme.Account, au
 		if errors.As(err, &problem) {
 			if c.Logger != nil {
 				c.Logger.Error("challenge failed",
-					zap.String("identifier", authz.Identifier.Value),
+					zap.String("identifier", authz.IdentifierValue()),
 					zap.String("challenge_type", authz.currentChallenge.Type),
 					zap.Int("status_code", problem.Status),
 					zap.String("problem_type", problem.Type),
@@ -511,7 +511,7 @@ func (c *Client) pollAuthorization(ctx context.Context, account acme.Account, au
 				return retryableErr{err}
 			}
 		}
-		return fmt.Errorf("[%s] %w", authz.Authorization.Identifier.Value, err)
+		return fmt.Errorf("[%s] %w", authz.Authorization.IdentifierValue(), err)
 	}
 	return nil
 }
@@ -585,7 +585,7 @@ func (fcm failedChallengeMap) enqueueUnfailedChallenges(authz *authzState) {
 }
 
 func (fcm failedChallengeMap) idKey(authz *authzState) string {
-	return authz.Identifier.Type + authz.Identifier.Value
+	return authz.Identifier.Type + authz.IdentifierValue()
 }
 
 // challengeTypes is a list of challenges we've seen and/or
