@@ -69,6 +69,15 @@ type Authorization struct {
 	Location string `json:"-"`
 }
 
+// IdentifierValue returns the Identifier.Value field, adjusted
+// according to the Wildcard field.
+func (authz Authorization) IdentifierValue() string {
+	if authz.Wildcard {
+		return "*." + authz.Identifier.Value
+	}
+	return authz.Identifier.Value
+}
+
 // fillChallengeFields populates extra fields in the challenge structs so that
 // challenges can be solved without needing a bunch of unnecessary extra state.
 func (authz *Authorization) fillChallengeFields(account Account) error {
@@ -166,6 +175,12 @@ func (c *Client) GetAuthorization(ctx context.Context, account Account, authzURL
 func (c *Client) PollAuthorization(ctx context.Context, account Account, authz Authorization) (Authorization, error) {
 	start, interval, maxDuration := time.Now(), c.pollInterval(), c.pollTimeout()
 
+	if authz.Status != "" {
+		if finalized, err := authzIsFinalized(authz); finalized {
+			return authz, err
+		}
+	}
+
 	for time.Since(start) < maxDuration {
 		select {
 		case <-time.After(interval):
@@ -173,6 +188,7 @@ func (c *Client) PollAuthorization(ctx context.Context, account Account, authz A
 			return authz, ctx.Err()
 		}
 
+		// get the latest authz object
 		resp, err := c.httpPostJWS(ctx, account.PrivateKey, account.Location, authz.Location, nil, &authz)
 		if err != nil {
 			return authz, fmt.Errorf("checking authorization status: %w", err)
@@ -257,6 +273,9 @@ func authzIsFinalized(authz Authorization) (bool, error) {
 		// ('expired'), be deactivated by the client ('deactivated', see
 		// Section 7.5.2), or revoked by the server ('revoked')." §7.1.6
 		return true, fmt.Errorf("authorization %s", authz.Status)
+
+	case "":
+		return false, fmt.Errorf("status unknown")
 
 	default:
 		return true, fmt.Errorf("server set unrecognized authorization status: %s", authz.Status)
