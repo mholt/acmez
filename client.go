@@ -379,7 +379,8 @@ func (c *Client) presentForNextChallenge(ctx context.Context, authz *authzState)
 	if c.Logger != nil {
 		c.Logger.Info("trying to solve challenge",
 			zap.String("identifier", authz.IdentifierValue()),
-			zap.String("challenge_type", authz.currentChallenge.Type))
+			zap.String("challenge_type", authz.currentChallenge.Type),
+			zap.String("ca", c.Directory))
 	}
 
 	err = authz.currentSolver.Present(ctx, authz.currentChallenge)
