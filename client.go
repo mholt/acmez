@@ -141,6 +141,7 @@ func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Acc
 				c.Logger.Error("validating authorization",
 					zap.String("identifier", authz.IdentifierValue()),
 					zap.Error(err),
+					zap.String("order", order.Location),
 					zap.Int("attempt", attempt),
 					zap.Int("max_attempts", maxAttempts))
 			}
@@ -151,23 +152,24 @@ func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Acc
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("solving challenges: %w", err)
+		return nil, fmt.Errorf("solving challenges: %w (order=%s)", err, order.Location)
 	}
 
 	if c.Logger != nil {
-		c.Logger.Info("validations succeeded; finalizing order")
+		c.Logger.Info("validations succeeded; finalizing order", zap.String("order", order.Location))
 	}
 
 	// finalize the order, which requests the CA to issue us a certificate
 	order, err = c.Client.FinalizeOrder(ctx, account, order, csr.Raw)
 	if err != nil {
-		return nil, fmt.Errorf("finalizing order: %w", err)
+		return nil, fmt.Errorf("finalizing order %s: %w", order.Location, err)
 	}
 
 	// finally, download the certificate
 	certChains, err := c.Client.GetCertificateChain(ctx, account, order.Certificate)
 	if err != nil {
-		return nil, fmt.Errorf("downloading certificate chain: %w", err)
+		return nil, fmt.Errorf("downloading certificate chain from %s: %w (order=%s)",
+			order.Certificate, err, order.Location)
 	}
 
 	if c.Logger != nil {
