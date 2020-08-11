@@ -92,13 +92,13 @@ func (c *Client) provision(ctx context.Context) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	if c.nonces == nil {
+		c.nonces = new(stack)
+	}
+
 	err := c.provisionDirectory(ctx)
 	if err != nil {
 		return fmt.Errorf("provisioning client: %w", err)
-	}
-
-	if c.nonces == nil {
-		c.nonces = new(stack)
 	}
 
 	return nil
