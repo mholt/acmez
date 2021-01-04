@@ -40,7 +40,7 @@ func main() {
 }
 
 func lowLevelExample() error {
-	// put your domains here
+	// put your domains here (IDNs must be in ASCII form)
 	domains := []string{"example.com"}
 
 	// a context allows us to cancel long-running ops
@@ -83,7 +83,7 @@ func lowLevelExample() error {
 		HTTPClient: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true, // we're just tinkering locally
+					InsecureSkipVerify: true, // we're just tinkering locally - REMOVE THIS FOR PRODUCTION USE!
 				},
 			},
 		},

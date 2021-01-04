@@ -85,17 +85,9 @@ func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Acc
 
 	var ids []acme.Identifier
 	for _, name := range csr.DNSNames {
-		// "The domain name MUST be encoded in the form in which it would appear
-		// in a certificate.  That is, it MUST be encoded according to the rules
-		// in Section 7 of [RFC5280]." §7.1.4
-		normalizedName, err := idna.ToASCII(name)
-		if err != nil {
-			return nil, fmt.Errorf("converting identifier '%s' to ASCII: %v", name, err)
-		}
-
 		ids = append(ids, acme.Identifier{
 			Type:  "dns",
-			Value: normalizedName,
+			Value: name,
 		})
 	}
 	if len(ids) == 0 {
@@ -206,7 +198,14 @@ func (c *Client) ObtainCertificate(ctx context.Context, account acme.Account, ce
 		} else if u, err := url.Parse(name); err == nil && strings.Contains(name, "/") {
 			csrTemplate.URIs = append(csrTemplate.URIs, u)
 		} else {
-			csrTemplate.DNSNames = append(csrTemplate.DNSNames, name)
+			// "The domain name MUST be encoded in the form in which it would appear
+			// in a certificate.  That is, it MUST be encoded according to the rules
+			// in Section 7 of [RFC5280]." §7.1.4
+			normalizedName, err := idna.ToASCII(name)
+			if err != nil {
+				return nil, fmt.Errorf("converting identifier '%s' to ASCII: %v", name, err)
+			}
+			csrTemplate.DNSNames = append(csrTemplate.DNSNames, normalizedName)
 		}
 	}
 

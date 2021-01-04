@@ -65,7 +65,7 @@ func highLevelExample() error {
 			HTTPClient: &http.Client{
 				Transport: &http.Transport{
 					TLSClientConfig: &tls.Config{
-						InsecureSkipVerify: true, // we're just tinkering locally
+						InsecureSkipVerify: true, // we're just tinkering locally - REMOVE THIS FOR PRODUCTION USE!
 					},
 				},
 			},
