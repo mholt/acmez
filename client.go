@@ -134,7 +134,10 @@ func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Acc
 		// for some errors, we can retry with different challenge types
 		var problem acme.Problem
 		if errors.As(err, &problem) {
-			authz := problem.Resource.(acme.Authorization)
+			authz, ok := problem.Resource.(acme.Authorization)
+			if !ok {
+				return nil, err
+			}
 			if c.Logger != nil {
 				c.Logger.Error("validating authorization",
 					zap.String("identifier", authz.IdentifierValue()),
