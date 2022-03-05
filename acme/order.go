@@ -114,6 +114,21 @@ func (c *Client) NewOrder(ctx context.Context, account Account, order Order) (Or
 	return order, nil
 }
 
+// GetOrder get a order with the server.
+//
+// "The client begins the certificate issuance process by sending a POST as GET
+// request to the server's order resource." §7.4
+func (c *Client) GetOrder(ctx context.Context, account Account, order Order) (Order, error) {
+	if err := c.provision(ctx); err != nil {
+		return order, err
+	}
+	_, err := c.httpPostJWS(ctx, account.PrivateKey, account.Location, order.Location, nil, &order)
+	if err != nil {
+		return order, err
+	}
+	return order, nil
+}
+
 // FinalizeOrder finalizes the order with the server and polls under the server has
 // updated the order status. The CSR must be in ASN.1 DER-encoded format. If this
 // succeeds, the certificate is ready to download once this returns.
