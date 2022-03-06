@@ -120,10 +120,7 @@ func (c *Client) GetOrder(ctx context.Context, account Account, order Order) (Or
 		return order, err
 	}
 	_, err := c.httpPostJWS(ctx, account.PrivateKey, account.Location, order.Location, nil, &order)
-	if err != nil {
-		return order, err
-	}
-	return order, nil
+	return order, err
 }
 
 // FinalizeOrder finalizes the order with the server and polls under the server has
