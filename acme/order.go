@@ -115,9 +115,6 @@ func (c *Client) NewOrder(ctx context.Context, account Account, order Order) (Or
 }
 
 // GetOrder retrieves an order from the server. The Order's Location field must be populated.
-//
-// "The client begins the certificate issuance process by sending a POST as GET
-// request to the server's order resource." §7.4
 func (c *Client) GetOrder(ctx context.Context, account Account, order Order) (Order, error) {
 	if err := c.provision(ctx); err != nil {
 		return order, err
