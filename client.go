@@ -60,9 +60,6 @@ type Client struct {
 
 	// Map of solvers keyed by name of the challenge type.
 	ChallengeSolvers map[string]Solver
-
-	// An optional logger. Default: no logs
-	Logger *zap.Logger
 }
 
 // ObtainCertificateUsingCSR obtains all resulting certificate chains using the given CSR, which
