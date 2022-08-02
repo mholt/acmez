@@ -26,6 +26,7 @@ import (
 	"net/http"
 
 	"github.com/mholt/acmez/acme"
+	"go.uber.org/zap"
 )
 
 // Run pebble (the ACME server) before running this example:
@@ -45,6 +46,12 @@ func lowLevelExample() error {
 
 	// a context allows us to cancel long-running ops
 	ctx := context.Background()
+
+	// Logging is important - replace with your own zap logger
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		return err
+	}
 
 	// first you need a private key for your certificate
 	certPrivateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
@@ -83,10 +90,11 @@ func lowLevelExample() error {
 		HTTPClient: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true, // we're just tinkering locally - REMOVE THIS FOR PRODUCTION USE!
+					InsecureSkipVerify: true, // REMOVE THIS FOR PRODUCTION USE!
 				},
 			},
 		},
+		Logger: logger,
 	}
 
 	// if the account is new, we need to create it; only do this once!

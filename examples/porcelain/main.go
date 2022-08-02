@@ -26,6 +26,7 @@ import (
 
 	"github.com/mholt/acmez"
 	"github.com/mholt/acmez/acme"
+	"go.uber.org/zap"
 )
 
 // Run pebble (the ACME server) before running this example:
@@ -46,6 +47,12 @@ func highLevelExample() error {
 	// A context allows us to cancel long-running ops
 	ctx := context.Background()
 
+	// Logging is important - replace with your own zap logger
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		return err
+	}
+
 	// A high-level client embeds a low-level client and makes
 	// the ACME flow much easier, but with less flexibility
 	// than using the low-level API directly (see other example).
@@ -58,17 +65,20 @@ func highLevelExample() error {
 	// where others might still succeed.
 	//
 	// Implementing challenge solvers is outside the scope of this
-	// example.
+	// example, but you can find a high-quality, general-purpose
+	// solver for the dns-01 challenge in CertMagic:
+	// https://pkg.go.dev/github.com/caddyserver/certmagic#DNS01Solver
 	client := acmez.Client{
 		Client: &acme.Client{
 			Directory: "https://127.0.0.1:14000/dir", // default pebble endpoint
 			HTTPClient: &http.Client{
 				Transport: &http.Transport{
 					TLSClientConfig: &tls.Config{
-						InsecureSkipVerify: true, // we're just tinkering locally - REMOVE THIS FOR PRODUCTION USE!
+						InsecureSkipVerify: true, // REMOVE THIS FOR PRODUCTION USE!
 					},
 				},
 			},
+			Logger: logger,
 		},
 		ChallengeSolvers: map[string]acmez.Solver{
 			acme.ChallengeTypeHTTP01:    mySolver{}, // provide these!
