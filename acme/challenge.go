@@ -114,6 +114,15 @@ func (c Challenge) DNS01KeyAuthorization() string {
 	return base64.RawURLEncoding.EncodeToString(h[:])
 }
 
+// MailReply00KeyAuthorization encodes a key authorization value to be sent
+// back to acme challange's reply-to address.
+// Subject of that mail is saparate token.
+// RFC8823 §3.1
+func (c Challenge) MailReply00KeyAuthorization(mailsubject string) string {
+	h := sha256.Sum256([]byte(mailsubject + c.KeyAuthorization))
+	return base64.RawURLEncoding.EncodeToString(h[:])
+}
+
 // InitiateChallenge "indicates to the server that it is ready for the challenge
 // validation by sending an empty JSON body ('{}') carried in a POST request to
 // the challenge URL (not the authorization URL)." §7.5.1
@@ -127,7 +136,8 @@ func (c *Client) InitiateChallenge(ctx context.Context, account Account, challen
 
 // The standard or well-known ACME challenge types.
 const (
-	ChallengeTypeHTTP01    = "http-01"     // RFC 8555 §8.3
-	ChallengeTypeDNS01     = "dns-01"      // RFC 8555 §8.4
-	ChallengeTypeTLSALPN01 = "tls-alpn-01" // RFC 8737 §3
+	ChallengeTypeHTTP01       = "http-01"        // RFC 8555 §8.3
+	ChallengeTypeDNS01        = "dns-01"         // RFC 8555 §8.4
+	ChallengeTypeTLSALPN01    = "tls-alpn-01"    // RFC 8737 §3
+	ChallengeTypeEMAILREPLY00 = "email-reply-00" // RFC 8823 §5.2
 )

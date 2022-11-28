@@ -71,7 +71,7 @@ type Client struct {
 // of "Create account" because this method signature does not have a way to return the updated
 // account object. The account's status MUST be "valid" in order to succeed.
 //
-// As far as SANs go, this method currently only supports DNSNames and IPAddresses on the csr.
+// As far as SANs go, this method currently only supports DNSNames, IPAddresses, and email on the csr.
 func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Account, csr *x509.CertificateRequest) ([]acme.Certificate, error) {
 	if account.Status != acme.StatusValid {
 		return nil, fmt.Errorf("account status is not valid: %s", account.Status)
@@ -91,6 +91,12 @@ func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Acc
 		ids = append(ids, acme.Identifier{
 			Type:  "ip", // RFC 8738
 			Value: ip.String(),
+		})
+	}
+	for _, email := range csr.EmailAddresses {
+		ids = append(ids, acme.Identifier{
+			Type:  "email", // RFC 8823
+			Value: email,
 		})
 	}
 	if len(ids) == 0 {
