@@ -78,6 +78,11 @@ type Challenge struct {
 	// structure as defined by the spec but is added by us to provide enough
 	// information to solve the DNS-01 challenge.
 	Identifier Identifier `json:"identifier,omitempty"`
+
+	// From header of email must match with from field of challange object
+	// because of RFC8823 §3.1 - 2, althougth that document forgot to actually
+	// add that modification to challenge object.
+	From string `json:"from,omitempty"`
 }
 
 // HTTP01ResourcePath returns the URI path for solving the http-01 challenge.
