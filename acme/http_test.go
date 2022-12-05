@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestExtractLinks(t *testing.T) {
@@ -50,6 +51,41 @@ func TestExtractLinks(t *testing.T) {
 		linkURLs := extractLinks(&http.Response{Header: http.Header{"Link": currentTest.LinkHeaders}}, currentTest.WantedLink)
 		if !reflect.DeepEqual(linkURLs, currentTest.ExpectedURLs) {
 			t.Fatalf("%s: links not equal, expected: %s, got: %s", currentTest.Name, currentTest.ExpectedURLs, linkURLs)
+		}
+	}
+}
+
+func TestRetryAfter(t *testing.T) {
+	fallback := time.Second * 60
+
+	gmt, _ := time.LoadLocation("GMT")
+	currentTime := time.Now().In(gmt)
+	retryAfterDateStr := currentTime.Add(time.Second * 456).Format(http.TimeFormat)
+
+	tests := []struct {
+		retryHeader string
+		expected    time.Duration
+	}{{
+		retryHeader: "",
+		expected:    fallback,
+	}, {
+		retryHeader: "123",
+		expected:    time.Second * 123,
+	}, {
+		retryHeader: retryAfterDateStr,
+		expected:    time.Second * 456,
+	}}
+
+	for _, test := range tests {
+		h := http.Header{}
+		h.Add("retry-after", test.retryHeader)
+		resp := http.Response{Header: h}
+		got, err := retryAfter(&resp, fallback)
+		if err != nil {
+			t.Error(err)
+			if got != test.expected {
+				t.Errorf("Expected %v, got %v", test.expected, got)
+			}
 		}
 	}
 }

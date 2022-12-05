@@ -373,15 +373,19 @@ func retryAfter(resp *http.Response, fallback time.Duration) (time.Duration, err
 	if resp == nil {
 		return fallback, nil
 	}
-	raSeconds := resp.Header.Get("Retry-After")
-	if raSeconds == "" {
+	raHeader := resp.Header.Get("Retry-After")
+	if raHeader == "" {
 		return fallback, nil
 	}
-	ra, err := strconv.Atoi(raSeconds)
-	if err != nil || ra < 0 {
-		return 0, fmt.Errorf("response had invalid Retry-After header: %s", raSeconds)
+	raSeconds, err := strconv.Atoi(raHeader)
+	if err == nil && raSeconds >= 0 {
+		return time.Duration(raSeconds) * time.Second, nil
 	}
-	return time.Duration(ra) * time.Second, nil
+	raTime, err := time.Parse(http.TimeFormat, raHeader)
+	if err == nil {
+		return time.Until(raTime), nil
+	}
+	return 0, fmt.Errorf("response had invalid Retry-After header: %s", raHeader)
 }
 
 var bufPool = sync.Pool{
