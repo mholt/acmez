@@ -38,7 +38,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const usage = `Usage: STTY=-icannon attestation <csr-file>
+const usage = `Usage: STTY=-icanon attestation <csr-file>
 
 <csr-file> A file with a certificate signing request or CSR.
 
@@ -86,7 +86,7 @@ Having the template in "attestation.tpl", and assuming the serial number is
 
 With this we can run this program with the new csr:
 
-  STTY=-icannon attestation att.csr
+  STTY=-icanon attestation att.csr
 
 The program will ask you to create an attestation of the ACME Key Authorization,
 running:
@@ -95,7 +95,7 @@ running:
   step kms attest --format step "yubikey:slot-id=82?pin-value=123456"
 
 Note that because the input that we need to past is usually more than 1024 long,
-the "STTY=-icannon" environment variable is required.
+the "STTY=-icanon" environment variable is required.
 
 [1] step-ca         - https://github.com/smallstep/certificates
 [2] step            - https://github.com/smallstep/cli
