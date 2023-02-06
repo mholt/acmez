@@ -82,9 +82,11 @@ To add the permanent identifier, we will need to use the following template:
 Having the template in "attestation.tpl", and assuming the serial number is
 123456789, we can get the proper CSR running:
 
-  step certificate create --csr --template attestation.tpl 123456789 att.csr
+  step certificate create --csr --template attestation.tpl \
+  --kms "yubikey:?pin-value=123456" --key "yubikey:slot-id=82" \
+  123456789 att.csr
 
-With this we can run this program with the new csr:
+With this we can run this program with the new CSR:
 
   STTY=-icanon attestation att.csr
 
@@ -94,8 +96,8 @@ running:
   echo -n <key-authorization> | \
   step kms attest --format step "yubikey:slot-id=82?pin-value=123456"
 
-Note that because the input that we need to past is usually more than 1024 long,
-the "STTY=-icanon" environment variable is required.
+Note that because the input that we need to paste is usually more than 1024
+characters, the "STTY=-icanon" environment variable is required.
 
 [1] step-ca         - https://github.com/smallstep/certificates
 [2] step            - https://github.com/smallstep/cli
