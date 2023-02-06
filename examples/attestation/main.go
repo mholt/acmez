@@ -46,7 +46,7 @@ To be able to run this example, we need to use a key that can be attested,
 "step-ca" [1], for example, supports attestation using YubiKey 5 Series.
 
 To configure "step-ca" with device-attest-01 support, you need to create an ACME
-provisioner with the devices-attest-01 challenge enabled, in the ca.json the
+provisioner with the device-attest-01 challenge enabled. In the ca.json the
 provisioner looks like this:
 
   {
@@ -55,21 +55,21 @@ provisioner looks like this:
     "challenges": [ "device-attest-01" ]
   }
 
-After configuring "step-ca" the first thing that we need is to create a Key in a
-slot, let's choose for example, 82. To do this, we will use "step" [2] with the
-"step-kms-plugin" [2], and we will run the following:
+After configuring "step-ca" the first thing that we need is to create a key in
+one of the YubiKey slots. We're picking 82 in this example. To do this, we will
+use "step" [2] with the "step-kms-plugin" [2], and we will run the following:
 
   step kms create "yubikey:slot-id=82?pin-value=123456"
 
 Then we need to create a CSR signed by this new key. This CSR must include the
 serial number in the Permanent Identifier Subject Alternative Name extension.
-The serial number of a YubiKey is printed in the key, but it is also available
+The serial number of a YubiKey is printed on the key, but it is also available
 in an attestation certificate. You can see it running:
 
   step kms attest "yubikey:slot-id=82?pin-value=123456" | \
   step certificate inspect
 
-But to add the permanent identifier, we will need to use the following template:
+To add the permanent identifier, we will need to use the following template:
 
   {
     "subject": {{ toJson .Subject }},
@@ -80,7 +80,7 @@ But to add the permanent identifier, we will need to use the following template:
   }
 
 Having the template in "attestation.tpl", and assuming the serial number is
-123456789 we can get the proper CSR running:
+123456789, we can get the proper CSR running:
 
   step certificate create --csr --template attestation.tpl 123456789 att.csr
 
@@ -160,11 +160,6 @@ func attestationExample(csr *x509.CertificateRequest) error {
 	//
 	// This example implements it's own solver that requires you to provide the
 	// device attestation statement.
-	//
-	// Implementing challenge solvers is outside the scope of this example, but
-	// you can find a high-quality, general-purpose solver for the dns-01
-	// challenge in CertMagic:
-	// https://pkg.go.dev/github.com/caddyserver/certmagic#DNS01Solver
 	client := acmez.Client{
 		Client: &acme.Client{
 			Directory: "https://localhost:9000/acme/attestation/directory",

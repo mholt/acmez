@@ -79,10 +79,10 @@ type Challenge struct {
 	// information to solve the DNS-01 challenge.
 	Identifier Identifier `json:"identifier,omitempty"`
 
-	// Payload contains a JSON-mashable value that will be sent to the CA when
-	// responding to challenges. If not defined, an empty JSON body "{}" will be
-	// included in the POST request. This field is applicable when responding to
-	// "device-attest-01" challenges.
+	// Payload contains a JSON-marshallable value that will be sent to the CA
+	// when responding to challenges. If not set, an empty JSON body "{}" will
+	// be included in the POST request. This field is applicable when responding
+	// to "device-attest-01" challenges.
 	Payload interface{} `json:"-"`
 }
 
@@ -139,5 +139,5 @@ const (
 	ChallengeTypeHTTP01         = "http-01"          // RFC 8555 §8.3
 	ChallengeTypeDNS01          = "dns-01"           // RFC 8555 §8.4
 	ChallengeTypeTLSALPN01      = "tls-alpn-01"      // RFC 8737 §3
-	ChallengeTypeDeviceAttest01 = "device-attest-01" // draft-bweeks-acme-device-attest-01 §5
+	ChallengeTypeDeviceAttest01 = "device-attest-01" // draft-acme-device-attest-00 §5
 )

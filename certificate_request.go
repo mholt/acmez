@@ -26,9 +26,9 @@ type otherName struct {
 	Value  asn1.RawValue
 }
 
-// permanentIdentifier is defined in RFC 4043 as an optional feature that
-// may be used by a CA to indicate that two or more certificates relate to the
-// same entity.
+// permanentIdentifier is defined in RFC 4043 as an optional feature that can be
+// used by a CA to indicate that two or more certificates relate to the same
+// entity.
 //
 // The OID defined for this SAN is "1.3.6.1.5.5.7.8.3".
 //
@@ -43,7 +43,7 @@ type permanentIdentifier struct {
 	Assigner        asn1.ObjectIdentifier `asn1:"optional"`
 }
 
-// hardwareModuleName is defined in RFC 4108 as an optional feature that by be
+// hardwareModuleName is defined in RFC 4108 as an optional feature that can be
 // used to identify a hardware module.
 //
 // The OID defined for this SAN is "1.3.6.1.5.5.7.8.4".
@@ -109,7 +109,7 @@ func createIdentifiersUsingCSR(csr *x509.CertificateRequest) ([]acme.Identifier,
 					var pi permanentIdentifier
 					if _, err := asn1.Unmarshal(on.Value.Bytes, &pi); err == nil {
 						ids = append(ids, acme.Identifier{
-							Type:  "permanent-identifier", // draft-bweeks-acme-device-attest-01 §3
+							Type:  "permanent-identifier", // draft-acme-device-attest-00 §3
 							Value: pi.IdentifierValue,
 						})
 					}
@@ -117,7 +117,7 @@ func createIdentifiersUsingCSR(csr *x509.CertificateRequest) ([]acme.Identifier,
 					var hmn hardwareModuleName
 					if _, err := asn1.Unmarshal(on.Value.Bytes, &hmn); err == nil {
 						ids = append(ids, acme.Identifier{
-							Type:  "hardware-module", // draft-bweeks-acme-device-attest-01 §4
+							Type:  "hardware-module", // draft-acme-device-attest-00 §4
 							Value: string(hmn.SerialNumber),
 						})
 					}
