@@ -155,5 +155,5 @@ const (
 	ChallengeTypeDNS01        = "dns-01"         // RFC 8555 §8.4
 	ChallengeTypeTLSALPN01    = "tls-alpn-01"    // RFC 8737 §3
 	ChallengeTypeDeviceAttest01 = "device-attest-01" // draft-acme-device-attest-00 §5
-  ChallengeTypeEMAILREPLY00 = "email-reply-00" // RFC 8823 §5.2
+	ChallengeTypeEMAILREPLY00 = "email-reply-00" // RFC 8823 §5.2
 )
