@@ -80,18 +80,9 @@ func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Acc
 		return nil, fmt.Errorf("missing CSR")
 	}
 
-	var ids []acme.Identifier
-	for _, name := range csr.DNSNames {
-		ids = append(ids, acme.Identifier{
-			Type:  "dns", // RFC 8555 §9.7.7
-			Value: name,
-		})
-	}
-	for _, ip := range csr.IPAddresses {
-		ids = append(ids, acme.Identifier{
-			Type:  "ip", // RFC 8738
-			Value: ip.String(),
-		})
+	ids, err := createIdentifiersUsingCSR(csr)
+	if err != nil {
+		return nil, err
 	}
 	for _, email := range csr.EmailAddresses {
 		ids = append(ids, acme.Identifier{
@@ -104,7 +95,6 @@ func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Acc
 	}
 
 	order := acme.Order{Identifiers: ids}
-	var err error
 
 	// remember which challenge types failed for which identifiers
 	// so we can retry with other challenge types
@@ -438,6 +428,26 @@ func (c *Client) initiateCurrentChallenge(ctx context.Context, authz *authzState
 		if err != nil {
 			return fmt.Errorf("waiting for solver %T to be ready: %w", authz.currentSolver, err)
 		}
+	}
+
+	// for device-attest-01 challenges the client needs to present a payload
+	// that will be validated by the CA.
+	if payloader, ok := authz.currentSolver.(Payloader); ok {
+		if c.Logger != nil {
+			c.Logger.Debug("getting payload from solver before continuing",
+				zap.String("identifier", authz.IdentifierValue()),
+				zap.String("challenge_type", authz.currentChallenge.Type))
+		}
+		p, err := payloader.Payload(ctx, authz.currentChallenge)
+		if c.Logger != nil {
+			c.Logger.Debug("done getting payload from solver",
+				zap.String("identifier", authz.IdentifierValue()),
+				zap.String("challenge_type", authz.currentChallenge.Type))
+		}
+		if err != nil {
+			return fmt.Errorf("getting payload from solver %T failed: %w", authz.currentSolver, err)
+		}
+		authz.currentChallenge.Payload = p
 	}
 
 	// tell the server to initiate the challenge
