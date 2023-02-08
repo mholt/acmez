@@ -93,6 +93,12 @@ func createIdentifiersUsingCSR(csr *x509.CertificateRequest) ([]acme.Identifier,
 			Value: ip.String(),
 		})
 	}
+	for _, email := range csr.EmailAddresses {
+		ids = append(ids, acme.Identifier{
+			Type:  "email", // RFC 8823
+			Value: email,
+		})
+	}
 
 	// Extract permanent identifiers and hardware module values.
 	// This block will ignore errors.

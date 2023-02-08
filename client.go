@@ -84,12 +84,6 @@ func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Acc
 	if err != nil {
 		return nil, err
 	}
-	for _, email := range csr.EmailAddresses {
-		ids = append(ids, acme.Identifier{
-			Type:  "email", // RFC 8823
-			Value: email,
-		})
-	}
 	if len(ids) == 0 {
 		return nil, fmt.Errorf("no identifiers found")
 	}
