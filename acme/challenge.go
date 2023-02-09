@@ -15,11 +15,11 @@
 package acme
 
 import (
-	"fmt"
-	"strings"
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"fmt"
+	"strings"
 )
 
 // Challenge holds information about an ACME challenge.
@@ -81,11 +81,10 @@ type Challenge struct {
 	// information to solve the DNS-01 challenge.
 	Identifier Identifier `json:"identifier,omitempty"`
 
-
 	// From header of email must match with from field of challange object
 	// because of RFC8823 §3.1 - 2, althougth that document forgot to actually
 	// add that modification to challenge object.
-	// this is to read by 
+	// this is to read by
 	From string `json:"from,omitempty"`
 
 	// Payload contains a JSON-marshallable value that will be sent to the CA
@@ -135,9 +134,28 @@ func (c Challenge) DNS01KeyAuthorization() string {
 // RFC8823 §3.1
 func (c Challenge) MailReply00KeyAuthorization(mailsubject string) string {
 	//if subject given has ACME: header, strip it before calculate keyauth
-	mailsubject = strings.Trimprefix(mailsubject, "ACME: ")
+	mailsubject = strings.TrimPrefix(mailsubject, "ACME: ")
 	h := sha256.Sum256([]byte(mailsubject + c.KeyAuthorization))
 	return base64.RawURLEncoding.EncodeToString(h[:])
+}
+
+// MailChallangeReplyGen builds email body with headers to reply MailReply00
+// challange Response email. This fucntion just build body, and sendung
+// message have to done by caller of this function
+
+func (c Challenge) MailChallangeReplyGen(mailsubject string, messgageid string) string {
+	mailsubject = strings.TrimPrefix(mailsubject, "ACME: ")
+	keyauth := c.MailReply00KeyAuthorization(mailsubject)
+	msg := fmt.Sprint("To: ", c.Identifier.Value, "\r\n",
+		"In-Reply-To: ", c.From, "\r\n",
+		"Subject: RE: ACME: ", mailsubject, "\r\n",
+		"Content-Type: text/plain\r\n",
+		"\r\n",
+		"-----BEGIN ACME RESPONSE-----\r\n",
+		keyauth, "\r\n",
+		"-----END ACME RESPONSE-----\r\n",
+	)
+	return msg
 }
 
 // InitiateChallenge "indicates to the server that it is ready for the challenge
@@ -156,9 +174,9 @@ func (c *Client) InitiateChallenge(ctx context.Context, account Account, challen
 
 // The standard or well-known ACME challenge types.
 const (
-	ChallengeTypeHTTP01       = "http-01"        // RFC 8555 §8.3
-	ChallengeTypeDNS01        = "dns-01"         // RFC 8555 §8.4
-	ChallengeTypeTLSALPN01    = "tls-alpn-01"    // RFC 8737 §3
+	ChallengeTypeHTTP01         = "http-01"          // RFC 8555 §8.3
+	ChallengeTypeDNS01          = "dns-01"           // RFC 8555 §8.4
+	ChallengeTypeTLSALPN01      = "tls-alpn-01"      // RFC 8737 §3
 	ChallengeTypeDeviceAttest01 = "device-attest-01" // draft-acme-device-attest-00 §5
-	ChallengeTypeEMAILREPLY00 = "email-reply-00" // RFC 8823 §5.2
+	ChallengeTypeEMAILREPLY00   = "email-reply-00"   // RFC 8823 §5.2
 )
