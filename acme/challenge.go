@@ -15,6 +15,8 @@
 package acme
 
 import (
+	"fmt"
+	"strings"
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
@@ -83,6 +85,7 @@ type Challenge struct {
 	// From header of email must match with from field of challange object
 	// because of RFC8823 §3.1 - 2, althougth that document forgot to actually
 	// add that modification to challenge object.
+	// this is to read by 
 	From string `json:"from,omitempty"`
 
 	// Payload contains a JSON-marshallable value that will be sent to the CA
@@ -131,6 +134,8 @@ func (c Challenge) DNS01KeyAuthorization() string {
 // Subject of that mail is saparate token.
 // RFC8823 §3.1
 func (c Challenge) MailReply00KeyAuthorization(mailsubject string) string {
+	//if subject given has ACME: header, strip it before calculate keyauth
+	mailsubject = strings.Trimprefix(mailsubject, "ACME: ")
 	h := sha256.Sum256([]byte(mailsubject + c.KeyAuthorization))
 	return base64.RawURLEncoding.EncodeToString(h[:])
 }
