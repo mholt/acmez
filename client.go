@@ -25,6 +25,9 @@
 // Most users actually want to *manage* certificates over the lifetime of
 // long-running programs such as HTTPS or TLS servers, and should use CertMagic
 // instead: https://github.com/caddyserver/certmagic.
+//
+// COMPATIBILITY: Exported identifiers that are related to draft specifications
+// are subject to change or removal without a major version bump.
 package acmez
 
 import (
