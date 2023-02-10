@@ -41,7 +41,7 @@ import (
 // body will have been drained and closed, so there is no need to close it again.
 // It automatically retries in the case of network, I/O, or badNonce errors.
 func (c *Client) httpPostJWS(ctx context.Context, privateKey crypto.Signer,
-	kid, endpoint string, input, output interface{}) (*http.Response, error) {
+	kid, endpoint string, input, output any) (*http.Response, error) {
 
 	if err := c.provision(ctx); err != nil {
 		return nil, err
@@ -130,7 +130,7 @@ func (c *Client) httpPostJWS(ctx context.Context, privateKey crypto.Signer,
 //
 // If there are any network or I/O errors, the request will be retried as safely and resiliently as
 // possible.
-func (c *Client) httpReq(ctx context.Context, method, endpoint string, joseJSONPayload []byte, output interface{}) (*http.Response, error) {
+func (c *Client) httpReq(ctx context.Context, method, endpoint string, joseJSONPayload []byte, output any) (*http.Response, error) {
 	// even if the caller doesn't specify an output, we still use a
 	// buffer to store possible error response (we reset it later)
 	buf := bufPool.Get().(*bytes.Buffer)
@@ -389,7 +389,7 @@ func retryAfter(resp *http.Response, fallback time.Duration) (time.Duration, err
 }
 
 var bufPool = sync.Pool{
-	New: func() interface{} {
+	New: func() any {
 		return new(bytes.Buffer)
 	},
 }

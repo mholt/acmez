@@ -83,7 +83,7 @@ type Challenge struct {
 	// when responding to challenges. If not set, an empty JSON body "{}" will
 	// be included in the POST request. This field is applicable when responding
 	// to "device-attest-01" challenges.
-	Payload interface{} `json:"-"`
+	Payload any `json:"-"`
 }
 
 // HTTP01ResourcePath returns the URI path for solving the http-01 challenge.
