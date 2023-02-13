@@ -81,9 +81,10 @@ type Challenge struct {
 	Identifier Identifier `json:"identifier,omitempty"`
 
 	// From header of email must match with from field of challange object
-	// because of RFC8823 §3.1 - 2, althougth that document forgot to actually
+	// because of RFC8823 §3.1 - 2, although that document forgot to actually
 	// add that modification to challenge object.
-	// this is to read by
+	// this will be given to Email client to search ACME challange EMail 
+	// dedicated for this challange
 	From string `json:"from,omitempty"`
 
 	// Payload contains a JSON-marshallable value that will be sent to the CA
@@ -129,13 +130,29 @@ func (c Challenge) DNS01KeyAuthorization() string {
 
 // MailReply00KeyAuthorization encodes a key authorization value to be sent
 // back to acme challange's reply-to address.
-// Subject of that mail is separate token.
+// Subject of that mail is separate token, token-part1.
+// and it's assembled with json token from challenge object, which rfc8823
+// calls token-part2
 // RFC8823 §3.1
 func (c Challenge) MailReply00KeyAuthorization(mailsubject string) string {
 	//if subject given has ACME: header, strip it before calculate keyauth
 	mailsubject = strings.TrimPrefix(mailsubject, "ACME: ")
 	h := sha256.Sum256([]byte(mailsubject + c.KeyAuthorization))
 	return base64.RawURLEncoding.EncodeToString(h[:])
+}
+
+// MailChallangeReplyGen builds email body with headers to reply MailReply00
+// challange email. This fucntion just build body, and send message have to done
+// by caller of this function
+
+func (c Challenge) MailChallangeReplyGen(mailsubject string, messgageid string) string{
+	keyauth := MailReply00KeyAuthorization(mailsubject)
+	body := fmt.Sprint()
+	msg := []byte("To: recipient@example.net\r\n" +
+		"Subject: discount Gophers!\r\n" +
+		"\r\n" +
+		"This is the email body.\r\n")
+	return msg
 }
 
 // InitiateChallenge "indicates to the server that it is ready for the challenge
