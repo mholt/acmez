@@ -18,7 +18,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
-	"fmt"
 	"strings"
 )
 
@@ -137,25 +136,6 @@ func (c Challenge) MailReply00KeyAuthorization(mailsubject string) string {
 	mailsubject = strings.TrimPrefix(mailsubject, "ACME: ")
 	h := sha256.Sum256([]byte(mailsubject + c.KeyAuthorization))
 	return base64.RawURLEncoding.EncodeToString(h[:])
-}
-
-// MailChallangeReplyGen builds email body with headers to reply MailReply00
-// challange Response email. This fucntion just build body, and sendung
-// message have to done by caller of this function
-
-func (c Challenge) MailChallangeReplyGen(mailsubject string, messgageid string) string {
-	mailsubject = strings.TrimPrefix(mailsubject, "ACME: ")
-	keyauth := c.MailReply00KeyAuthorization(mailsubject)
-	msg := fmt.Sprint("To: ", c.Identifier.Value, "\r\n",
-		"In-Reply-To: ", c.From, "\r\n",
-		"Subject: RE: ACME: ", mailsubject, "\r\n",
-		"Content-Type: text/plain\r\n",
-		"\r\n",
-		"-----BEGIN ACME RESPONSE-----\r\n",
-		keyauth, "\r\n",
-		"-----END ACME RESPONSE-----\r\n",
-	)
-	return msg
 }
 
 // InitiateChallenge "indicates to the server that it is ready for the challenge
