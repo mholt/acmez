@@ -141,20 +141,6 @@ func (c Challenge) MailReply00KeyAuthorization(mailsubject string) string {
 	return base64.RawURLEncoding.EncodeToString(h[:])
 }
 
-// MailChallangeReplyGen builds email body with headers to reply MailReply00
-// challange email. This fucntion just build body, and send message have to done
-// by caller of this function
-
-func (c Challenge) MailChallangeReplyGen(mailsubject string, messgageid string) string{
-	keyauth := MailReply00KeyAuthorization(mailsubject)
-	body := fmt.Sprint()
-	msg := []byte("To: recipient@example.net\r\n" +
-		"Subject: discount Gophers!\r\n" +
-		"\r\n" +
-		"This is the email body.\r\n")
-	return msg
-}
-
 // InitiateChallenge "indicates to the server that it is ready for the challenge
 // validation by sending an empty JSON body ('{}') carried in a POST request to
 // the challenge URL (not the authorization URL)." §7.5.1
