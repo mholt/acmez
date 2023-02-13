@@ -26,7 +26,6 @@ import (
 // message have to done by caller of this function
 // mailSubject and messageId is such from challange mail,
 // and if there is no reply-to header in challange email, replyto parametere should be ""
-
 func MailChallangeReplyGen(c acme.Challenge, mailSubject string, messgageId string, replyto string) string {
 	if len(replyto) == 0 {
 		replyto = c.From

@@ -129,7 +129,7 @@ func (c Challenge) DNS01KeyAuthorization() string {
 
 // MailReply00KeyAuthorization encodes a key authorization value to be sent
 // back to acme challange's reply-to address.
-// Subject of that mail is saparate token.
+// Subject of that mail is separate token.
 // RFC8823 §3.1
 func (c Challenge) MailReply00KeyAuthorization(mailsubject string) string {
 	//if subject given has ACME: header, strip it before calculate keyauth
