@@ -37,6 +37,13 @@ type Certificate struct {
 
 	// The PEM-encoded certificate chain, end-entity first.
 	ChainPEM []byte `json:"-"`
+
+	// For convenience, the directory URL for the CA that
+	// issued this certificate. This is not part of the
+	// ACME spec, but storing this alongside the
+	// certificate can be handy for restoring a lost ACME
+	// client configuration.
+	CA string `json:"ca,omitempty"`
 }
 
 // GetCertificateChain downloads all available certificate chains originating from
@@ -74,6 +81,7 @@ func (c *Client) GetCertificateChain(ctx context.Context, account Account, certU
 			chains = append(chains, Certificate{
 				URL:      certURL,
 				ChainPEM: buf.Bytes(),
+				CA:       c.Directory,
 			})
 		default:
 			return resp, fmt.Errorf("unrecognized Content-Type from server: %s", contentType)
