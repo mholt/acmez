@@ -65,9 +65,9 @@ func (c *Client) GetRenewalInfo(ctx context.Context, b64CertIDSeq string) (Renew
 	return ari, nil
 }
 
-// UpdateRenewalStatus notifies the ACME server that the certificate represented by b64CertIDSeq
+// UpdateRenewalInfo notifies the ACME server that the certificate represented by b64CertIDSeq
 // has been replaced. The b64CertIDSeq string can be obtained by calling `CertIDSequence()`.
-func (c *Client) UpdateRenewalStatus(ctx context.Context, account Account, b64CertIDSeq string) error {
+func (c *Client) UpdateRenewalInfo(ctx context.Context, account Account, b64CertIDSeq string) error {
 	if err := c.provision(ctx); err != nil {
 		return err
 	}
