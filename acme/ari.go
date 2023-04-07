@@ -94,7 +94,7 @@ func (c *Client) UpdateRenewalInfo(ctx context.Context, account Account, b64Cert
 // CertIDSequence returns the "base64url-encoded [RFC4648] bytes of a DER-encoded CertID ASN.1 sequence [RFC6960]"
 // without padding for the given certificate chain. It is used primarily for requests to OCSP and ARI.
 //
-// The certificate chain must contain at least two elements: an end-entity certificate first, followed by and issuer
+// The certificate chain must contain at least two elements: an end-entity certificate first, followed by an issuer
 // certificate second. Of the end-entity certificate, only the SerialNumber field is required; and of the issuer
 // certificate, only the RawSubjectPublicKeyInfo and RawSubject fields are required. If the issuer certificate is
 // not provided, then it will be downloaded if the end-entity certificate contains the IssuingCertificateURL.
