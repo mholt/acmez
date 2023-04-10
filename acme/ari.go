@@ -24,6 +24,8 @@ import (
 //
 // ACME Renewal Information (ARI):
 // https://datatracker.ietf.org/doc/draft-ietf-acme-ari/
+//
+// This is a DRAFT specification and the API is subject to change.
 type RenewalInfo struct {
 	SuggestedWindow struct {
 		Start time.Time `json:"start"`
