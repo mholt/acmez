@@ -26,7 +26,9 @@ import (
 
 // Certificate represents a certificate chain, which we usually refer
 // to as "a certificate" because in practice an end-entity certificate
-// is seldom useful/practical without a chain.
+// is seldom useful/practical without a chain. This structure can be
+// JSON-encoded and stored alongside the certificate chain to preserve
+// potentially-useful metadata.
 type Certificate struct {
 	// The certificate resource URL as provisioned by
 	// the ACME server. Some ACME servers may split
@@ -36,13 +38,14 @@ type Certificate struct {
 	URL string `json:"url"`
 
 	// The PEM-encoded certificate chain, end-entity first.
+	// It is excluded from JSON marshalling since the
+	// chain is usually stored in its own file.
 	ChainPEM []byte `json:"-"`
 
-	// For convenience, the directory URL for the CA that
-	// issued this certificate. This is not part of the
-	// ACME spec, but storing this alongside the
-	// certificate can be handy for restoring a lost ACME
-	// client configuration.
+	// For convenience, the directory URL of the ACME CA that
+	// issued this certificate. This field is not part of the
+	// ACME spec, but it can be useful to save this along with
+	// the certificate for restoring a lost ACME client config.
 	CA string `json:"ca,omitempty"`
 }
 
