@@ -65,33 +65,21 @@ type Client struct {
 	ChallengeSolvers map[string]Solver
 }
 
-// ObtainCertificateUsingCSR obtains all resulting certificate chains using the given CSR, which
-// must be completely and properly filled out (particularly its DNSNames and Raw fields - this
-// usually involves creating a template CSR, then calling x509.CreateCertificateRequest, then
-// x509.ParseCertificateRequest on the output). The Subject CommonName is NOT considered.
-//
-// It implements every single part of the ACME flow described in RFC 8555 §7.1 with the exception
-// of "Create account" because this method signature does not have a way to return the updated
-// account object. The account's status MUST be "valid" in order to succeed.
-//
-// As far as SANs go, this method currently only supports DNSNames and IPAddresses on the csr.
-func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Account, csr *x509.CertificateRequest) ([]acme.Certificate, error) {
+type Finalizer interface {
+	Identifiers() []acme.Identifier
+	Finalize(context.Context) (*x509.CertificateRequest, error)
+}
+
+func (c *Client) ObtainCertificateUsingFinalizer(ctx context.Context, account acme.Account, finalizer Finalizer) ([]acme.Certificate, error) {
 	if account.Status != acme.StatusValid {
 		return nil, fmt.Errorf("account status is not valid: %s", account.Status)
 	}
-	if csr == nil {
-		return nil, fmt.Errorf("missing CSR")
+	if finalizer == nil {
+		return nil, errors.New("missing finalizer")
 	}
 
-	ids, err := createIdentifiersUsingCSR(csr)
-	if err != nil {
-		return nil, err
-	}
-	if len(ids) == 0 {
-		return nil, fmt.Errorf("no identifiers found")
-	}
-
-	order := acme.Order{Identifiers: ids}
+	var err error
+	order := acme.Order{Identifiers: finalizer.Identifiers()}
 
 	// remember which challenge types failed for which identifiers
 	// so we can retry with other challenge types
@@ -154,6 +142,14 @@ func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Acc
 		c.Logger.Info("validations succeeded; finalizing order", zap.String("order", order.Location))
 	}
 
+	csr, err := finalizer.Finalize(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("finalizing CSR: %w", err)
+	}
+
+	// TODO(hs): add validation of CSR by comparing against provided
+	// identifiers?
+
 	// finalize the order, which requests the CA to issue us a certificate
 	order, err = c.Client.FinalizeOrder(ctx, account, order, csr.Raw)
 	if err != nil {
@@ -178,6 +174,50 @@ func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Acc
 	}
 
 	return certChains, nil
+}
+
+type csrFinalizer struct {
+	identifiers *[]acme.Identifier
+	csr         *x509.CertificateRequest
+}
+
+func (i *csrFinalizer) Identifiers() []acme.Identifier {
+	return *i.identifiers
+}
+
+func (i *csrFinalizer) Finalize(_ context.Context) (*x509.CertificateRequest, error) {
+	return i.csr, nil
+}
+
+// ObtainCertificateUsingCSR obtains all resulting certificate chains using the given CSR, which
+// must be completely and properly filled out (particularly its DNSNames and Raw fields - this
+// usually involves creating a template CSR, then calling x509.CreateCertificateRequest, then
+// x509.ParseCertificateRequest on the output). The Subject CommonName is NOT considered.
+//
+// It implements every single part of the ACME flow described in RFC 8555 §7.1 with the exception
+// of "Create account" because this method signature does not have a way to return the updated
+// account object. The account's status MUST be "valid" in order to succeed.
+//
+// As far as SANs go, this method currently only supports DNSNames and IPAddresses on the csr.
+func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Account, csr *x509.CertificateRequest) ([]acme.Certificate, error) {
+	if csr == nil {
+		return nil, fmt.Errorf("missing CSR")
+	}
+
+	ids, err := createIdentifiersUsingCSR(csr)
+	if err != nil {
+		return nil, err
+	}
+	if len(ids) == 0 {
+		return nil, fmt.Errorf("no identifiers found")
+	}
+
+	finalizer := &csrFinalizer{
+		identifiers: &ids,
+		csr:         csr,
+	}
+
+	return c.ObtainCertificateUsingFinalizer(ctx, account, finalizer)
 }
 
 // ObtainCertificate is the same as ObtainCertificateUsingCSR, except it is a slight wrapper
