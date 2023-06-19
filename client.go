@@ -65,10 +65,29 @@ type Client struct {
 	ChallengeSolvers map[string]Solver
 }
 
+// CSRSource is an interface that provides users of this
+// package the ability to provide a CSR as part of the
+// ACME flow. This allows the final CSR to be provided
+// just before the Order is finalized.
 type CSRSource interface {
 	CSR(context.Context) (*x509.CertificateRequest, error)
 }
 
+// ObtainCertificateUsingCSRSource obtains all resulting certificate chains using the given
+// ACME Identifiers and the CSRSource. The CSRSource can be used to create and sign a final
+// CSR to be submitted to the ACME server just before finalization. The CSR  must be completely
+// and properly filled out, because the provided ACME Identifiers will be validated against
+// the Identifiers that can be extracted from the CSR. This package currently supports the
+// DNS, IP address, Permanent Identifier and Hardware Module Name identifiers. The Subject
+// CommonName is NOT considered.
+//
+// The CSR's Raw field containing the DER encoded signed certificate request must also be
+// set. This usually involves creating a template CSR, then calling x509.CreateCertificateRequest,
+// then x509.ParseCertificateRequest on the output.
+//
+// The method implements every single part of the ACME flow described in RFC 8555 §7.1 with the
+// exception of "Create account" because this method signature does not have a way to return
+// the updated account object. The account's status MUST be "valid" in order to succeed.
 func (c *Client) ObtainCertificateUsingCSRSource(ctx context.Context, account acme.Account, identifiers []acme.Identifier, source CSRSource) ([]acme.Certificate, error) {
 	if account.Status != acme.StatusValid {
 		return nil, fmt.Errorf("account status is not valid: %s", account.Status)
@@ -144,12 +163,15 @@ func (c *Client) ObtainCertificateUsingCSRSource(ctx context.Context, account ac
 	// get the CSR from its source
 	csr, err := source.CSR(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("sourcing CSR: %w", err)
+		return nil, fmt.Errorf("getting CSR from source: %w", err)
+	}
+	if csr == nil {
+		return nil, errors.New("source did not provide CSR")
 	}
 
 	// validate the order identifiers
 	if err := validateOrderIdentifiers(&order, csr); err != nil {
-		return nil, fmt.Errorf("validating Order identifiers: %w", err)
+		return nil, fmt.Errorf("validating order identifiers: %w", err)
 	}
 
 	// finalize the order, which requests the CA to issue us a certificate
@@ -208,6 +230,9 @@ func validateOrderIdentifiers(order *acme.Order, csr *x509.CertificateRequest) e
 	return nil
 }
 
+// csrSource implements the CSRSource interface and is used internally
+// to pass a CSR to ObtainCertificateUsingCSRSource from the existing
+// ObtainCertificateUsingCSR method.
 type csrSource struct {
 	csr *x509.CertificateRequest
 }
@@ -227,7 +252,8 @@ var _ CSRSource = (*csrSource)(nil)
 // of "Create account" because this method signature does not have a way to return the updated
 // account object. The account's status MUST be "valid" in order to succeed.
 //
-// As far as SANs go, this method currently only supports DNSNames and IPAddresses on the csr.
+// As far as SANs go, this method currently only supports DNSNames, IPAddresses, Permanent
+// Identifiers and Hardware Module Names on the CSR.
 func (c *Client) ObtainCertificateUsingCSR(ctx context.Context, account acme.Account, csr *x509.CertificateRequest) ([]acme.Certificate, error) {
 	if csr == nil {
 		return nil, errors.New("missing CSR")
