@@ -141,13 +141,16 @@ func (c *Client) ObtainCertificateUsingCSRSource(ctx context.Context, account ac
 		c.Logger.Info("validations succeeded; finalizing order", zap.String("order", order.Location))
 	}
 
+	// get the CSR from its source
 	csr, err := source.CSR(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("sourcing CSR: %w", err)
 	}
 
-	// TODO(hs): add validation of CSR by comparing against provided
-	// identifiers?
+	// validate the order identifiers
+	if err := validateOrderIdentifiers(&order, csr); err != nil {
+		return nil, fmt.Errorf("validating Order identifiers: %w", err)
+	}
 
 	// finalize the order, which requests the CA to issue us a certificate
 	order, err = c.Client.FinalizeOrder(ctx, account, order, csr.Raw)
@@ -173,6 +176,36 @@ func (c *Client) ObtainCertificateUsingCSRSource(ctx context.Context, account ac
 	}
 
 	return certChains, nil
+}
+
+// validateOrderIdentifiers checks if the ACME identifiers provided for the
+// Order match the identifiers that are in the CSR. A mismatch between the two
+// should result the certificate not being issued by the ACME server, but
+// checking this on the client side is faster. Currently there's no way to
+// skip this validation.
+func validateOrderIdentifiers(order *acme.Order, csr *x509.CertificateRequest) error {
+	csrIdentifiers, err := createIdentifiersUsingCSR(csr)
+	if err != nil {
+		return fmt.Errorf("extracting identifiers from CSR: %w", err)
+	}
+	if len(csrIdentifiers) != len(order.Identifiers) {
+		return fmt.Errorf("number of identifiers in Order %v (%d) does not match the number of identifiers extracted from CSR %v (%d)", order.Identifiers, len(order.Identifiers), csrIdentifiers, len(csrIdentifiers))
+	}
+
+	identifiers := make([]acme.Identifier, 0, len(order.Identifiers))
+	for _, identifier := range order.Identifiers {
+		for _, csrIdentifier := range csrIdentifiers {
+			if csrIdentifier.Value == identifier.Value && csrIdentifier.Type == identifier.Type {
+				identifiers = append(identifiers, identifier)
+			}
+		}
+	}
+
+	if len(identifiers) != len(csrIdentifiers) {
+		return fmt.Errorf("identifiers in Order %v do not match the identifiers extracted from CSR %v", order.Identifiers, csrIdentifiers)
+	}
+
+	return nil
 }
 
 type csrSource struct {
