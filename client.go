@@ -50,10 +50,6 @@ import (
 	"golang.org/x/net/idna"
 )
 
-func init() {
-	weakrand.Seed(time.Now().UnixNano())
-}
-
 // Client is a high-level API for ACME operations. It wraps
 // a lower-level ACME client with useful functions to make
 // common flows easier, especially for the issuance of
@@ -346,10 +342,12 @@ func (c *Client) getAuthzObjects(ctx context.Context, account acme.Account, orde
 			preferredChallenges.addUnique(chal.Type)
 		}
 		if preferredWasEmpty {
-			weakrand.Shuffle(len(preferredChallenges), func(i, j int) {
+			randomSourceMu.Lock()
+			randomSource.Shuffle(len(preferredChallenges), func(i, j int) {
 				preferredChallenges[i], preferredChallenges[j] =
 					preferredChallenges[j], preferredChallenges[i]
 			})
+			randomSourceMu.Unlock()
 		}
 		preferredChallengesMu.Unlock()
 
@@ -796,9 +794,15 @@ type retryableErr struct{ error }
 
 func (re retryableErr) Unwrap() error { return re.error }
 
-// Keep a list of challenges we've seen offered by servers,
-// and prefer keep an ordered list of
+// Keep a list of challenges we've seen offered by servers, ordered by success rate.
 var (
 	preferredChallenges   challengeTypes
 	preferredChallengesMu sync.Mutex
+)
+
+// Best practice is to avoid the default RNG source and seed our own;
+// custom sources are not safe for concurrent use, hence the mutex.
+var (
+	randomSource   = weakrand.New(weakrand.NewSource(time.Now().UnixNano()))
+	randomSourceMu sync.Mutex
 )
