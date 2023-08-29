@@ -93,7 +93,7 @@ func (c *Client) ObtainCertificateUsingCSRSource(ctx context.Context, account ac
 	}
 
 	var err error
-	order := acme.Order{Identifiers: identifiers, Status: "pending"}
+	order := acme.Order{Identifiers: identifiers}
 
 	// remember which challenge types failed for which identifiers
 	// so we can retry with other challenge types

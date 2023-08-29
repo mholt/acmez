@@ -32,7 +32,7 @@ type Order struct {
 	// status (required, string):  The status of this order.  Possible
 	// values are "pending", "ready", "processing", "valid", and
 	// "invalid".  See Section 7.1.6.
-	Status string `json:"status"`
+	Status string `default:"pending";json:"status"`
 
 	// expires (optional, string):  The timestamp after which the server
 	// will consider this order invalid, encoded in the format specified
