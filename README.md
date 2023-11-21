@@ -74,6 +74,9 @@ A few years later, Caddy's novel auto-HTTPS logic was extracted into a library c
 
 Soon thereafter, the lego project shifted maintainership and the goals and vision of the project diverged from those of Caddy's use case of managing tens of thousands of certificates per instance. Eventually, [the original Caddy author announced work on a new ACME client library in Go](https://github.com/caddyserver/certmagic/issues/71) that satisfied Caddy's harsh requirements for large-scale enterprise deployments, lean builds, and simple API. This work exceeded expectations and finally came to fruition in 2020 as ACMEz. It is much more lightweight with zero core dependencies, has a simple and elegant code base, and is thoroughly documented and easy to build upon.
 
+> [!NOTE]
+> This is not an official repository of the [Caddy Web Server](https://github.com/caddyserver) organization.
+
 ---
 
 (c) 2020 Matthew Holt
