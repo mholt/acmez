@@ -53,24 +53,6 @@ func lowLevelExample() error {
 		return err
 	}
 
-	// first you need a private key for your certificate
-	certPrivateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		return fmt.Errorf("generating certificate key: %v", err)
-	}
-
-	// then you need a certificate request; here's a simple one - we need
-	// to fill out the template, then create the actual CSR, then parse it
-	csrTemplate := &x509.CertificateRequest{DNSNames: domains}
-	csrDER, err := x509.CreateCertificateRequest(rand.Reader, csrTemplate, certPrivateKey)
-	if err != nil {
-		return fmt.Errorf("generating CSR: %v", err)
-	}
-	csr, err := x509.ParseCertificateRequest(csrDER)
-	if err != nil {
-		return fmt.Errorf("parsing generated CSR: %v", err)
-	}
-
 	// before you can get a cert, you'll need an account registered with
 	// the ACME CA - it also needs a private key and should obviously be
 	// different from any key used for certificates!
@@ -157,6 +139,28 @@ func lowLevelExample() error {
 		// if we got here, then the challenge was solved successfully, hurray!
 	}
 
+	// we should be able to get a certificate now, so we need a private key
+	// to generate a CSR; if you think these functions may error and you
+	// do not want to waste the ACME transaction, you should do this at
+	// the top *before* starting ACME, but since key material is sensitive,
+	// avoid storing it anywhere until you get the certificate
+	certPrivateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return fmt.Errorf("generating certificate key: %v", err)
+	}
+
+	// then you need a certificate request; here's a simple one - we need
+	// to fill out the template, then create the actual CSR, then parse it
+	csrTemplate := &x509.CertificateRequest{DNSNames: domains}
+	csrDER, err := x509.CreateCertificateRequest(rand.Reader, csrTemplate, certPrivateKey)
+	if err != nil {
+		return fmt.Errorf("generating CSR: %v", err)
+	}
+	csr, err := x509.ParseCertificateRequest(csrDER)
+	if err != nil {
+		return fmt.Errorf("parsing generated CSR: %v", err)
+	}
+
 	// to request a certificate, we finalize the order; this function
 	// will poll the order status for us and return once the cert is
 	// ready (or until there is an error)
@@ -175,7 +179,7 @@ func lowLevelExample() error {
 		return fmt.Errorf("downloading certs: %v", err)
 	}
 
-	// all done! store it somewhere safe, along with its key
+	// all done! store it somewhere safe, along with its key (certPrivateKey)
 	for _, cert := range certChains {
 		fmt.Printf("Certificate %q:\n%s\n\n", cert.URL, cert.ChainPEM)
 	}
