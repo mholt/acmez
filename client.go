@@ -61,14 +61,6 @@ type Client struct {
 	ChallengeSolvers map[string]Solver
 }
 
-// CSRSource is an interface that provides users of this
-// package the ability to provide a CSR as part of the
-// ACME flow. This allows the final CSR to be provided
-// just before the Order is finalized.
-type CSRSource interface {
-	CSR(context.Context) (*x509.CertificateRequest, error)
-}
-
 // ObtainCertificateUsingCSRSource obtains all resulting certificate chains using the given
 // ACME Identifiers and the CSRSource. The CSRSource can be used to create and sign a final
 // CSR to be submitted to the ACME server just before finalization. The CSR  must be completely
@@ -225,19 +217,6 @@ func validateOrderIdentifiers(order *acme.Order, csr *x509.CertificateRequest) e
 
 	return nil
 }
-
-// csrSource implements the CSRSource interface and is used internally
-// to pass a CSR to ObtainCertificateUsingCSRSource from the existing
-// ObtainCertificateUsingCSR method.
-type csrSource struct {
-	csr *x509.CertificateRequest
-}
-
-func (i *csrSource) CSR(_ context.Context) (*x509.CertificateRequest, error) {
-	return i.csr, nil
-}
-
-var _ CSRSource = (*csrSource)(nil)
 
 // ObtainCertificateUsingCSR obtains all resulting certificate chains using the given CSR, which
 // must be completely and properly filled out (particularly its DNSNames and Raw fields - this
@@ -787,6 +766,28 @@ func contains(haystack []string, needle string) bool {
 	}
 	return false
 }
+
+// CSRSource is an interface that provides users of this
+// package the ability to provide a CSR as part of the
+// ACME flow. This allows the final CSR to be provided
+// just before the Order is finalized.
+type CSRSource interface {
+	CSR(context.Context) (*x509.CertificateRequest, error)
+}
+
+// csrSource implements the CSRSource interface and is used internally
+// to pass a CSR to ObtainCertificateUsingCSRSource from the existing
+// ObtainCertificateUsingCSR method.
+type csrSource struct {
+	csr *x509.CertificateRequest
+}
+
+func (i *csrSource) CSR(_ context.Context) (*x509.CertificateRequest, error) {
+	return i.csr, nil
+}
+
+// Interface guard
+var _ CSRSource = (*csrSource)(nil)
 
 // retryableErr wraps an error that indicates the caller should retry
 // the operation; specifically with a different challenge type.

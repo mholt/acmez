@@ -25,6 +25,9 @@ import (
 	"go.uber.org/zap"
 )
 
+// TODO: (Feb. 2024) this quote will be outdated soon. See
+// https://github.com/aarongable/draft-acme-ari/issues/55
+//
 // RenewalInfo "is a new resource type introduced to ACME protocol.
 // This new resource both allows clients to query the server for
 // suggestions on when they should renew certificates, and allows
@@ -73,34 +76,6 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 
 	return ari, nil
 }
-
-// TODO: This functionality was removed from the spec in draft 02. Confirm that it is gone for good before deleting.
-//
-// // UpdateRenewalInfo notifies the ACME server that the certificate represented by b64CertIDSeq
-// // has been replaced. The b64CertIDSeq string can be obtained by calling `CertIDSequence()`.
-// func (c *Client) UpdateRenewalInfo(ctx context.Context, account Account, b64CertIDSeq string) error {
-// 	if err := c.provision(ctx); err != nil {
-// 		return err
-// 	}
-
-// 	payload := struct {
-// 		CertID   string `json:"certID"`
-// 		Replaced bool   `json:"replaced"`
-// 	}{
-// 		CertID:   b64CertIDSeq,
-// 		Replaced: true,
-// 	}
-
-// 	resp, err := c.httpPostJWS(ctx, account.PrivateKey, account.Location, c.dir.RenewalInfo, payload, nil)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if resp.StatusCode != http.StatusOK {
-// 		return fmt.Errorf("updating renewal status: HTTP %d", resp.StatusCode)
-// 	}
-
-// 	return nil
-// }
 
 // ariEndpoint returns the ARI endpoint URI for the given certificate
 // according to the configured CA's directory.
