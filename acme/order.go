@@ -32,7 +32,7 @@ type Order struct {
 	// status (required, string):  The status of this order.  Possible
 	// values are "pending", "ready", "processing", "valid", and
 	// "invalid".  See Section 7.1.6.
-	Status string `json:"status"`
+	Status string `json:"status,omitempty"`
 
 	// expires (optional, string):  The timestamp after which the server
 	// will consider this order invalid, encoded in the format specified
@@ -43,6 +43,17 @@ type Order struct {
 	// identifiers (required, array of object):  An array of identifier
 	// objects that the order pertains to.
 	Identifiers []Identifier `json:"identifiers"`
+
+	// replaces (string, optional): A string uniquely identifying a
+	// previously-issued certificate which this order is intended to replace.
+	// This unique identifier is constructed in the same way as the path
+	// component for GET requests described above. Clients SHOULD include
+	// this field in New Order requests if there is a clear predecessor
+	// certificate, as is the case for most certificate renewals.
+	//
+	// ACME EXTENSION. REFER TO:
+	// ACME Renewal Information (ARI) spec, draft-ietf-acme-ari-03.
+	Replaces string `json:"replaces,omitempty"`
 
 	// notBefore (optional, string):  The requested value of the notBefore
 	// field in the certificate, in the date format defined in [RFC3339].

@@ -81,5 +81,5 @@ type Waiter interface {
 //
 // Implementations MUST honor context cancellation.
 type Payloader interface {
-	Payload(context.Context, acme.Challenge) (interface{}, error)
+	Payload(context.Context, acme.Challenge) (any, error)
 }

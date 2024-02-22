@@ -221,7 +221,7 @@ func (s attSolver) CleanUp(ctx context.Context, chal acme.Challenge) error {
 	return nil
 }
 
-func (s attSolver) Payload(ctx context.Context, chal acme.Challenge) (interface{}, error) {
+func (s attSolver) Payload(ctx context.Context, chal acme.Challenge) (any, error) {
 	log.Printf("[DEBUG] payload: %#v", chal)
 
 	// Calculate key authorization. This is the data that we need to sign to
