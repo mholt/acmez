@@ -187,8 +187,13 @@ func attestationExample(csr *x509.CertificateRequest) error {
 		return fmt.Errorf("new account: %v", err)
 	}
 
+	params, err := acmez.OrderParametersFromCSR(account, csr)
+	if err != nil {
+		return fmt.Errorf("order parameters: %v", err)
+	}
+
 	// Do the ACME dance with the created account and get the certificates.
-	certs, err := client.ObtainCertificateUsingCSR(ctx, account, csr)
+	certs, err := client.ObtainCertificate(ctx, params)
 	if err != nil {
 		return fmt.Errorf("obtaining certificate: %v", err)
 	}
