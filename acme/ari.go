@@ -83,7 +83,7 @@ func (c *Client) ariEndpoint(leafCert *x509.Certificate) string {
 	if leafCert == nil || leafCert.SerialNumber == nil {
 		return ""
 	}
-	return fmt.Sprintf("%s/%s/%s", c.dir.RenewalInfo,
+	return fmt.Sprintf("%s/%s.%s", c.dir.RenewalInfo,
 		b64NoPad.EncodeToString(leafCert.AuthorityKeyId),
 		b64NoPad.EncodeToString(leafCert.SerialNumber.Bytes()))
 }
