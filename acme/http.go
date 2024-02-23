@@ -163,6 +163,7 @@ func (c *Client) httpReq(ctx context.Context, method, endpoint string, joseJSONP
 		}
 		if len(joseJSONPayload) > 0 {
 			req.Header.Set("Content-Type", "application/jose+json")
+			req.Header.Set("Accept", "*/*")
 		}
 
 		// on first attempt, we need to reset buf since it
