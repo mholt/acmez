@@ -36,6 +36,14 @@ import (
 // NewCSR creates and signs a Certificate Signing Request (CSR) for the given subject
 // identifiers (SANs) with the private key.
 //
+// If you need extensions or other customizations, this function is too opinionated.
+// Instead, create a new(x509.CertificateRequest), then fill out the relevant fields
+// (SANs, extensions, etc.), send it into x509.CreateCertificateRequest(), then pass
+// that result into x509.ParseCertificateRequest() to get the final, parsed CSR. We
+// chose this API to offer the most common convenience functions, but also to give
+// users advanced flexibility when needed, all while reducing allocations from
+// encoding & decoding each CSR and minimizing having to pass the private key around.
+//
 // Supported SAN types are IPs, email addresses, URIs, and DNS names.
 //
 // EXPERIMENTAL: This API is subject to change or removal without a major version bump.
@@ -83,42 +91,43 @@ func NewCSR(privateKey crypto.Signer, sans []string) (*x509.CertificateRequest, 
 // certificate (except the private key, which is provided separately to prevent
 // inadvertent exposure of secret material) through ACME in one consolidated value.
 //
-// Account, Subjects, and CSR fields are REQUIRED.
+// Account, Identifiers, and CSR fields are REQUIRED.
 type OrderParameters struct {
 	// The ACME account with which to perform certificate operations.
 	// It should already be registered with the server and have a
 	// "valid" status.
 	Account acme.Account
 
-	// The list of subjects for which to issue the certificate.
-	// Subjects become Subject Alternate Names (SANs) in the
+	// The list of identifiers for which to issue the certificate.
+	// Identifiers may become Subject Alternate Names (SANs) in the
 	// certificate. This slice must be consistent with the SANs
 	// listed in the CSR. The OrderFromCSR() function can be
-	// used by most users to ensure consistency.
+	// called to ensure consistency in most cases.
 	//
 	// Supported identifier types are currently: dns, ip,
 	// permanent-identifier, and hardware-module.
-	Subjects []acme.Identifier
+	Identifiers []acme.Identifier
 
 	// CSR is a type that can provide the Certificate Signing
 	// Request, which is needed when finalizing the ACME order.
-	// It is used after challenges have completed and before
+	// It is invoked after challenges have completed and before
 	// finalization.
 	CSR CSRSource
 
 	// Optionally customize the lifetime of the certificate by
-	// specifying the NotAfter date for the certificate. Not all
-	// CAs support this. Check your CA's ACME server documentation.
-	NotAfter time.Time
+	// specifying the NotBefore and/or NotAfter dates for the
+	// certificate. Not all CAs support this. Check your CA's
+	// ACME service documentation.
+	NotBefore, NotAfter time.Time
 
-	// Set this if a certificate is being renewed.
+	// Set this to the old certificate if a certificate is being renewed.
 	//
 	// DRAFT: EXPERIMENTAL ARI DRAFT SPEC. Subject to change/removal.
-	Replacing *x509.Certificate
+	Replaces *x509.Certificate
 }
 
 // OrderParametersFromCSR makes a valid OrderParameters from the given CSR.
-// If necessary, it may be further customized before using.
+// If necessary, the returned parameters may be further customized before using.
 //
 // EXPERIMENTAL: This API is subject to change or removal without a major version bump.
 func OrderParametersFromCSR(account acme.Account, csr *x509.CertificateRequest) (OrderParameters, error) {
@@ -130,9 +139,9 @@ func OrderParametersFromCSR(account acme.Account, csr *x509.CertificateRequest) 
 		return OrderParameters{}, errors.New("no subjects found in CSR")
 	}
 	return OrderParameters{
-		Account:  account,
-		Subjects: ids,
-		CSR:      StaticCSR(csr),
+		Account:     account,
+		Identifiers: ids,
+		CSR:         StaticCSR(csr),
 	}, nil
 }
 
@@ -143,6 +152,8 @@ func OrderParametersFromCSR(account acme.Account, csr *x509.CertificateRequest) 
 // for certain challenge types (e.g. device-attest-01,
 // where the key used for signing the CSR doesn't exist
 // until the challenge has been validated).
+//
+// EXPERIMENTAL: Subject to change (though unlikely, and nothing major).
 type CSRSource interface {
 	// CSR returns a Certificate Signing Request that will be
 	// given to the ACME server. This function is called after

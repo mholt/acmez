@@ -85,14 +85,20 @@ func (c *Client) ObtainCertificate(ctx context.Context, params OrderParameters) 
 	if params.CSR == nil {
 		return nil, errors.New("missing CSR source")
 	}
-	if len(params.Subjects) == 0 {
-		return nil, errors.New("order does not list any subjects")
+	if len(params.Identifiers) == 0 {
+		return nil, errors.New("order does not list any identifiers")
 	}
 
 	// create the ACME order
-	order := acme.Order{Identifiers: params.Subjects}
+	order := acme.Order{Identifiers: params.Identifiers}
+	if !params.NotBefore.IsZero() {
+		order.NotBefore = &params.NotBefore
+	}
 	if !params.NotAfter.IsZero() {
 		order.NotAfter = &params.NotAfter
+	}
+	if params.Replaces != nil {
+		order.Replaces = acme.ARIUniqueIdentifier(params.Replaces)
 	}
 
 	// prepare to retry the transaction multiple times if necessary
@@ -161,7 +167,7 @@ func (c *Client) ObtainCertificate(ctx context.Context, params OrderParameters) 
 	}
 
 	// get the CSR
-	csr, err := params.CSR.CSR(ctx, params.Subjects)
+	csr, err := params.CSR.CSR(ctx, params.Identifiers)
 	if err != nil {
 		return nil, fmt.Errorf("getting CSR from source: %w", err)
 	}
@@ -169,7 +175,7 @@ func (c *Client) ObtainCertificate(ctx context.Context, params OrderParameters) 
 		return nil, errors.New("source did not provide CSR")
 	}
 
-	// validate the order identifiers
+	// ensure the order identifiers match the CSR
 	if err := validateOrderIdentifiers(&order, csr); err != nil {
 		return nil, fmt.Errorf("validating order identifiers: %w", err)
 	}

@@ -87,7 +87,7 @@ func (c *Client) ariEndpoint(leafCert *x509.Certificate) string {
 
 // ARIUniqueIdentifier returns the unique identifier for the certificate
 // as used by ACME Renewal Information.
-// EXPERIMENTAL: ARI is a draft RFC spec: draft-ietf-acme-ari
+// EXPERIMENTAL: ARI is a draft RFC spec: draft-ietf-acme-ari-03
 func ARIUniqueIdentifier(leafCert *x509.Certificate) string {
 	return b64NoPad.EncodeToString(leafCert.AuthorityKeyId) + "." +
 		b64NoPad.EncodeToString(leafCert.SerialNumber.Bytes())
