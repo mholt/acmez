@@ -56,7 +56,10 @@ type Client struct {
 	ChallengeSolvers map[string]Solver
 }
 
-// ObtainCertificateForSANs is a light wrapper over ObtainCertificate
+// ObtainCertificateForSANs is a light wrapper over ObtainCertificate that generates a simple CSR
+// for the identifiers given in the list of SANs using the given private key; then it obtains a
+// certificate right away. If you require customizing the parameters of the order, use ObtainCertificate
+// instead.
 func (c *Client) ObtainCertificateForSANs(ctx context.Context, account acme.Account, certPrivateKey crypto.Signer, sans []string) ([]acme.Certificate, error) {
 	csr, err := NewCSR(certPrivateKey, sans)
 	if err != nil {
