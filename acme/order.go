@@ -51,8 +51,7 @@ type Order struct {
 	// this field in New Order requests if there is a clear predecessor
 	// certificate, as is the case for most certificate renewals.
 	//
-	// ACME EXTENSION. REFER TO:
-	// ACME Renewal Information (ARI) spec, draft-ietf-acme-ari-03.
+	// EXPERIMENTAL:  Draft ACME extension ARI: draft-ietf-acme-ari-03
 	Replaces string `json:"replaces,omitempty"`
 
 	// notBefore (optional, string):  The requested value of the notBefore
