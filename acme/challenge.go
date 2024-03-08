@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"strings"
 )
 
 // Challenge holds information about an ACME challenge.
@@ -79,6 +80,13 @@ type Challenge struct {
 	// information to solve the DNS-01 challenge.
 	Identifier Identifier `json:"identifier,omitempty"`
 
+	// From header of email must match with from field of challange object
+	// because of RFC8823 §3.1 - 2, although that document forgot to actually
+	// add that modification to challenge object.
+	// this will be given to Email client to search ACME challange EMail 
+	// dedicated for this challange
+	From string `json:"from,omitempty"`
+
 	// Payload contains a JSON-marshallable value that will be sent to the CA
 	// when responding to challenges. If not set, an empty JSON body "{}" will
 	// be included in the POST request. This field is applicable when responding
@@ -120,6 +128,19 @@ func (c Challenge) DNS01KeyAuthorization() string {
 	return base64.RawURLEncoding.EncodeToString(h[:])
 }
 
+// MailReply00KeyAuthorization encodes a key authorization value to be sent
+// back to acme challange's reply-to address.
+// Subject of that mail is separate token, token-part1.
+// and it's assembled with json token from challenge object, which rfc8823
+// calls token-part2
+// RFC8823 §3.1
+func (c Challenge) MailReply00KeyAuthorization(mailsubject string) string {
+	//if subject given has ACME: header, strip it before calculate keyauth
+	mailsubject = strings.TrimPrefix(mailsubject, "ACME: ")
+	h := sha256.Sum256([]byte(mailsubject + c.KeyAuthorization))
+	return base64.RawURLEncoding.EncodeToString(h[:])
+}
+
 // InitiateChallenge "indicates to the server that it is ready for the challenge
 // validation by sending an empty JSON body ('{}') carried in a POST request to
 // the challenge URL (not the authorization URL)." §7.5.1
@@ -140,4 +161,5 @@ const (
 	ChallengeTypeDNS01          = "dns-01"           // RFC 8555 §8.4
 	ChallengeTypeTLSALPN01      = "tls-alpn-01"      // RFC 8737 §3
 	ChallengeTypeDeviceAttest01 = "device-attest-01" // draft-acme-device-attest-00 §5
+	ChallengeTypeEMAILREPLY00   = "email-reply-00"   // RFC 8823 §5.2
 )
