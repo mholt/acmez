@@ -20,6 +20,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // Order is an object that "represents a client's request for a certificate
@@ -97,6 +99,14 @@ type Order struct {
 	Location string `json:"-"`
 }
 
+func (o Order) identifierValues() []string {
+	var list []string
+	for _, id := range o.Identifiers {
+		list = append(list, id.Value)
+	}
+	return list
+}
+
 // Identifier is used in order and authorization (authz) objects.
 type Identifier struct {
 	// type (required, string):  The type of identifier.  This document
@@ -115,6 +125,11 @@ type Identifier struct {
 func (c *Client) NewOrder(ctx context.Context, account Account, order Order) (Order, error) {
 	if err := c.provision(ctx); err != nil {
 		return order, err
+	}
+	if c.Logger != nil {
+		c.Logger.Debug("creating order",
+			zap.String("account", account.Location),
+			zap.Strings("identifiers", order.identifierValues()))
 	}
 	resp, err := c.httpPostJWS(ctx, account.PrivateKey, account.Location, c.dir.NewOrder, order, &order)
 	if err != nil {

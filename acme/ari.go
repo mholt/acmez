@@ -89,6 +89,9 @@ func (c *Client) ariEndpoint(leafCert *x509.Certificate) string {
 // as used by ACME Renewal Information.
 // EXPERIMENTAL: ARI is a draft RFC spec: draft-ietf-acme-ari-03
 func ARIUniqueIdentifier(leafCert *x509.Certificate) string {
+	if leafCert.SerialNumber == nil {
+		return ""
+	}
 	return b64NoPad.EncodeToString(leafCert.AuthorityKeyId) + "." +
 		b64NoPad.EncodeToString(leafCert.SerialNumber.Bytes())
 }
