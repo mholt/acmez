@@ -41,7 +41,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mholt/acmez/acme"
+	"github.com/mholt/acmez/v2/acme"
 	"go.uber.org/zap"
 )
 
