@@ -21,20 +21,20 @@ import (
 	"github.com/mholt/acmez/acme"
 )
 
-// MailChallangeReplyGen builds email body with headers to reply MailReply00
-// challange Response email. This fucntion just build body, and sendung
-// message have to done by caller of this function
-// mailSubject and messageId is such from challange mail,
-// and if there is no reply-to header in challange email, replyto parametere should be ""
-func MailChallangeReplyGen(c acme.Challenge, mailSubject string, messgageId string, replyto string) string {
-	if len(replyto) == 0 {
-		replyto = c.From
+// MailChallengeReplyGen builds email body with headers to reply MailReply00
+// challenge response email. This function only builds the email body; sending the
+// message has to be performed by caller of this function.
+// mailSubject and messageId come from the challenge mail,
+// and if there is no reply-to header in challenge email, replyTo parameter should be ""
+func MailChallengeReplyGen(c acme.Challenge, mailSubject string, messageId string, replyTo string) string {
+	if len(replyTo) == 0 {
+		replyTo = c.From
 	}
 	mailSubject = strings.TrimPrefix(mailSubject, "ACME: ")
 	keyauth := c.MailReply00KeyAuthorization(mailSubject)
-	msg := fmt.Sprint("To: ", replyto, "\r\n",
+	msg := fmt.Sprint("To: ", replyTo, "\r\n",
 		"From:", c.Identifier.Value, "\r\n",
-		"In-Reply-To: ", messgageId, "\r\n",
+		"In-Reply-To: ", messageId, "\r\n",
 		"Subject: RE: ACME: ", mailSubject, "\r\n",
 		"Content-Type: text/plain\r\n",
 		"\r\n",

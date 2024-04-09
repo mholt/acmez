@@ -38,7 +38,7 @@ type Solver interface {
 	// the DNS record propagates. The API request should be
 	// done in Present(), and waiting for propagation should
 	// be done in Wait().
-	// Another example is acme-mail-reply-00 challange,
+	// Another example is acme-mail-reply-00 challenge,
 	// because until acme servers sent challenge email
 	// we can't do anything, so for that challenge
 	// Present() must be placeholder and present should done at Wait()
