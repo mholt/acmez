@@ -18,7 +18,6 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/base64"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -83,9 +82,18 @@ func (c *Client) ariEndpoint(leafCert *x509.Certificate) string {
 	if leafCert == nil || leafCert.SerialNumber == nil {
 		return ""
 	}
-	return fmt.Sprintf("%s/%s.%s", c.dir.RenewalInfo,
-		b64NoPad.EncodeToString(leafCert.AuthorityKeyId),
-		b64NoPad.EncodeToString(leafCert.SerialNumber.Bytes()))
+	return c.dir.RenewalInfo + "/" + ARIUniqueIdentifier(leafCert)
+}
+
+// ARIUniqueIdentifier returns the unique identifier for the certificate
+// as used by ACME Renewal Information.
+// EXPERIMENTAL: ARI is a draft RFC spec: draft-ietf-acme-ari-03
+func ARIUniqueIdentifier(leafCert *x509.Certificate) string {
+	if leafCert.SerialNumber == nil {
+		return ""
+	}
+	return b64NoPad.EncodeToString(leafCert.AuthorityKeyId) + "." +
+		b64NoPad.EncodeToString(leafCert.SerialNumber.Bytes())
 }
 
 var b64NoPad = base64.URLEncoding.WithPadding(base64.NoPadding)

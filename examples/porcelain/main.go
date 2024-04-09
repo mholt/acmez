@@ -24,8 +24,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/mholt/acmez"
-	"github.com/mholt/acmez/acme"
+	"github.com/mholt/acmez/v2"
+	"github.com/mholt/acmez/v2/acme"
 	"go.uber.org/zap"
 )
 
@@ -89,7 +89,8 @@ func highLevelExample() error {
 
 	// Before you can get a cert, you'll need an account registered with
 	// the ACME CA; it needs a private key which should obviously be
-	// different from any key used for certificates!
+	// different from any key used for certificates! BE SURE TO SAVE THE
+	// PRIVATE KEY SO YOU CAN REUSE THE ACCOUNT.
 	accountPrivateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return fmt.Errorf("generating account key: %v", err)
@@ -116,10 +117,11 @@ func highLevelExample() error {
 
 	// Once your client, account, and certificate key are all ready,
 	// it's time to request a certificate! The easiest way to do this
-	// is to use ObtainCertificate() and pass in your list of domains
-	// that you want on the cert. But if you need more flexibility, you
-	// should create a CSR yourself and use ObtainCertificateUsingCSR().
-	certs, err := client.ObtainCertificate(ctx, account, certPrivateKey, domains)
+	// is to use ObtainCertificateForSANs() and pass in your list of
+	// domains that you want on the cert. But if you need more
+	// flexibility, you should create a CSR yourself and use
+	// ObtainCertificates().
+	certs, err := client.ObtainCertificateForSANs(ctx, account, certPrivateKey, domains)
 	if err != nil {
 		return fmt.Errorf("obtaining certificate: %v", err)
 	}
