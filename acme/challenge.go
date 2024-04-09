@@ -83,7 +83,7 @@ type Challenge struct {
 	// From header of email must match with from field of challenge object
 	// because of RFC8823 §3.1 - 2, although that document forgot to actually
 	// add that modification to challenge object.
-	// this will be given to Email client to search ACME challange EMail 
+	// this will be given to email client to search ACME challenge email 
 	// dedicated for this challenge
 	From string `json:"from,omitempty"`
 
