@@ -81,10 +81,7 @@ type Challenge struct {
 	Identifier Identifier `json:"identifier,omitempty"`
 
 	// From header of email must match with from field of challenge object
-	// because of RFC8823 §3.1 - 2, although that document forgot to actually
-	// add that modification to challenge object.
-	// this will be given to email client to search ACME challenge email 
-	// dedicated for this challenge
+	// by RFC8823 §3.1 - 2, added on 3-6.3.1
 	From string `json:"from,omitempty"`
 
 	// Payload contains a JSON-marshallable value that will be sent to the CA
