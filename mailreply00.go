@@ -21,12 +21,12 @@ import (
 	"github.com/mholt/acmez/acme"
 )
 
-// MailChallengeReplyGen builds email body with headers to reply MailReply00
-// challenge response email. This function only builds the email body; sending the
-// message has to be performed by caller of this function.
-// mailSubject and messageId come from the challenge mail,
-// and if there is no reply-to header in challenge email, replyTo parameter should be ""
-func MailChallengeReplyGen(c acme.Challenge, mailSubject string, messageId string, replyTo string) string {
+// MailReplyChallengeResponse builds an email response body including headers to reply to the 
+// email-reply-00 challenge email. This function only builds the email body; sending the
+// message has to be performed by the caller of this function. The mailSubject and 
+// messageId come from the challenge mail, and if there is no reply-to header in the 
+// challenge email, the replyTo parameter should be empty.
+func MailReplyChallengeResponse(c acme.Challenge, mailSubject string, messageId string, replyTo string) string {
 	if len(replyTo) == 0 {
 		replyTo = c.From
 	}
