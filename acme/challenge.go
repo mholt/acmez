@@ -133,7 +133,11 @@ func (c Challenge) DNS01KeyAuthorization() string {
 func (c Challenge) MailReply00KeyAuthorization(mailsubject string) string {
 	// if subject given has "ACME:" header, strip it before calculating the key authorization
 	mailsubject = strings.TrimPrefix(mailsubject, "ACME: ")
-	h := sha256.Sum256([]byte(mailsubject + c.KeyAuthorization))
+	tokenP1, _ := base64.RawURLEncoding.DecodeString(mailsubject)
+	tokenP2, _ := base64.RawURLEncoding.DecodeString(c.Token)
+	tokenFull := base64.RawURLEncoding.EncodeToString(append(tokenP1, tokenP2...))
+	mailKeyAuth := strings.Replace(c.KeyAuthorization, c.Token, tokenFull, 1)
+	h := sha256.Sum256([]byte(mailsubject + mailKeyAuth))
 	return base64.RawURLEncoding.EncodeToString(h[:])
 }
 
