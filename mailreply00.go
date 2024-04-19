@@ -31,7 +31,7 @@ func MailChallengeReplyGen(c acme.Challenge, mailSubject string, messageId strin
 		replyTo = c.From
 	}
 	mailSubject = strings.TrimPrefix(mailSubject, "ACME: ")
-	keyauth := c.MailReply00KeyAuthorization(mailSubject)
+	keyAuth := c.MailReply00KeyAuthorization(mailSubject)
 	msg := fmt.Sprint("To: ", replyTo, "\r\n",
 		"From:", c.Identifier.Value, "\r\n",
 		"In-Reply-To: ", messageId, "\r\n",
@@ -39,7 +39,7 @@ func MailChallengeReplyGen(c acme.Challenge, mailSubject string, messageId strin
 		"Content-Type: text/plain\r\n",
 		"\r\n",
 		"-----BEGIN ACME RESPONSE-----\r\n",
-		keyauth, "\r\n",
+		keyAuth, "\r\n",
 		"-----END ACME RESPONSE-----\r\n",
 	)
 	return msg

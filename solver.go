@@ -38,10 +38,9 @@ type Solver interface {
 	// the DNS record propagates. The API request should be
 	// done in Present(), and waiting for propagation should
 	// be done in Wait().
-	// Another example is acme-mail-reply-00 challenge,
-	// because until acme servers sent challenge email
-	// we can't do anything, so for that challenge
-	// Present() must be placeholder and present should done at Wait()
+	// Another example is the email-reply-00 challenge, because
+	// it can take a while for an ACME server to send a challenge
+	// email and for it to arrive at the email client.
 	Present(context.Context, acme.Challenge) error
 
 	// CleanUp is called after a challenge is finished, whether
