@@ -26,13 +26,14 @@ In other words, the `acmez` package is **porcelain** while the `acme` package is
 - Context cancellation (suitable for high-frequency config changes or reloads)
 - Highly flexible and customizable
 - External Account Binding (EAB) support
-- Tested with multiple ACME CAs (more than just Let's Encrypt)
+- Tested with numerous ACME CAs (more than just Let's Encrypt)
 - Implements niche aspects of RFC 8555 (such as alt cert chains and account key rollover)
 - Efficient solving of large SAN lists (e.g. for slow DNS record propagation)
 - Utility functions for solving challenges
-	- [Device attestation challenges](https://datatracker.ietf.org/doc/draft-acme-device-attest/)
-	- RFC 8737 (tls-alpn-01 challenge)
-- ACME Renewal Information (ARI) support (draft-ietf-acme-ari-03)
+	- Device attestation challenges ([draft-acme-device-attest-02](https://datatracker.ietf.org/doc/draft-acme-device-attest/))
+	- [RFC 8737](https://www.rfc-editor.org/rfc/rfc8737.html) (tls-alpn-01 challenge)
+	- [RFC 8823](https://www.rfc-editor.org/rfc/rfc8823.html) (email-reply-00 challenge; S/MIME)
+- ACME Renewal Information (ARI) support ([draft-ietf-acme-ari-03](https://datatracker.ietf.org/doc/draft-ietf-acme-ari/))
 
 
 ## Install
@@ -56,7 +57,9 @@ However, you can find [a general-purpose dns-01 solver in CertMagic](https://pkg
 ```go
 // minimal example using Cloudflare
 solver := &certmagic.DNS01Solver{
-	DNSProvider: &cloudflare.Provider{APIToken: "topsecret"},
+	DNSManager: certmagic.DNSManager{
+		DNSProvider: &cloudflare.Provider{APIToken: "topsecret"},
+	},
 }
 client := acmez.Client{
 	ChallengeSolvers: map[string]acmez.Solver{

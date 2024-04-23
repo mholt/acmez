@@ -257,7 +257,7 @@ func (c *Client) getAuthzObjects(ctx context.Context, account acme.Account, orde
 		}
 
 		// add all offered challenge types to our memory if they
-		// arent't there already; we use this for statistics to
+		// aren't there already; we use this for statistics to
 		// choose the most successful challenge type over time;
 		// if initial fill, randomize challenge order
 		preferredChallengesMu.Lock()
