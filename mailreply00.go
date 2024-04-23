@@ -26,21 +26,23 @@ import (
 // message has to be performed by the caller of this function. The mailSubject and
 // messageId come from the challenge mail, and if there is no reply-to header in the
 // challenge email, the replyTo parameter should be empty.
-func MailReplyChallengeResponse(c acme.Challenge, mailSubject string, messageId string, replyTo string) string {
-	if len(replyTo) == 0 {
+func MailReplyChallengeResponse(c acme.Challenge, mailSubject string, messageId string, replyTo string) (string, error) {
+	if replyTo == "" {
 		replyTo = c.From
 	}
-	mailSubject = strings.TrimPrefix(mailSubject, "ACME: ")
-	keyAuth := c.MailReply00KeyAuthorization(mailSubject)
-	msg := fmt.Sprint("To: ", replyTo, "\r\n",
-		"From:", c.Identifier.Value, "\r\n",
-		"In-Reply-To: ", messageId, "\r\n",
-		"Subject: RE: ACME: ", mailSubject, "\r\n",
-		"Content-Type: text/plain\r\n",
-		"\r\n",
-		"-----BEGIN ACME RESPONSE-----\r\n",
-		keyAuth, "\r\n",
-		"-----END ACME RESPONSE-----\r\n",
-	)
-	return msg
+	tokenPart1 := strings.TrimPrefix(mailSubject, "ACME: ")
+	keyAuth, err := c.MailReply00KeyAuthorization(tokenPart1)
+	if err != nil {
+		return "", fmt.Errorf("failed creating key authorization: %w", err)
+	}
+	msg := fmt.Sprintf("To: %s\r\n"+
+		"From: %s\r\n"+
+		"In-Reply-To: %s\r\n"+
+		"Subject: RE: ACME: %s\r\n"+
+		"Content-Type: text/plain\r\n"+
+		"\r\n"+
+		"-----BEGIN ACME RESPONSE-----\r\n"+
+		"%s\r\n"+
+		"-----END ACME RESPONSE-----\r\n", replyTo, c.Identifier.Value, messageId, tokenPart1, keyAuth)
+	return msg, nil
 }
