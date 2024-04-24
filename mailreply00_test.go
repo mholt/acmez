@@ -16,6 +16,8 @@ package acmez
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net/mail"
@@ -26,25 +28,45 @@ import (
 )
 
 func TestMailReplyChallengeResponse(t *testing.T) {
-	tokenPart2 := "mGVIRa3ZTr3TPSUN"                            // token-part2, obtained through JSON response
-	thumbprint := "e3xcaXlZ7Ur9xZzIuRDt9dP2r5xspalWFCDfjCbFkzg" // fake (raw) base64url encoded account public key
+	tokenPart2 := "x6I65YvEk6xC4KV0QMvdJw"                      // token-part2, obtained through JSON response
+	thumbprint := "hC4xyXNn8ZDH4yrcp93Zj3qgQs7LyT_GUL45YD7IVMQ" // fake (raw) base64url encoded account public key
 	c := acme.Challenge{
 		From:             "acmeca@test.example.com",
 		Identifier:       acme.Identifier{Type: "email", Value: "client@test.example.com"},
 		Token:            tokenPart2,
 		KeyAuthorization: fmt.Sprintf("%s.%s", tokenPart2, thumbprint), // with email-reply-00 only 2nd half of token is prefixed
 	}
-	subject := "ACME: dmlxbmw5d2xjT05zWVFGNw" // (raw) base64url encoded token-part1
+	subject := "ACME: V4nE8NhYh6edBpfQTg5qqQ" // (raw) base64url encoded token-part1
+
+	// simulate decoding / (re)encoding logic to constuct key authorization
+	tp1, err := base64.RawURLEncoding.DecodeString("V4nE8NhYh6edBpfQTg5qqQ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tp2, err := base64.RawURLEncoding.DecodeString(tokenPart2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	token := base64.RawURLEncoding.EncodeToString(append(tp1, tp2...))
+	h := sha256.Sum256([]byte(fmt.Sprintf("%s.%s", token, thumbprint)))
+	keyAuthorization := base64.RawURLEncoding.EncodeToString(h[:])
+	if keyAuthorization != "Fjt2SD7KoqSt3I6jwgg8ljjkP9Er7h1w0wF0UihvQIU" {
+		t.Errorf("expected key authorization to be %q, got %q", "Fjt2SD7KoqSt3I6jwgg8ljjkP9Er7h1w0wF0UihvQIU", keyAuthorization)
+	}
+
+	// generate the actual response
 	got, err := MailReplyChallengeResponse(c, subject, "messageId", "")
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	// parse the email message
 	msg, err := mail.ReadMessage(bytes.NewBufferString(got))
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	// validate email header properties
 	if to := msg.Header.Get("to"); to != "acmeca@test.example.com" {
 		t.Errorf("expected To to be %q, got %q", "acmeca@test.example.com", to)
 	}
@@ -54,8 +76,8 @@ func TestMailReplyChallengeResponse(t *testing.T) {
 	if replyTo := msg.Header.Get("in-reply-to"); replyTo != "messageId" {
 		t.Errorf("expected content type to be %q, got %q", "messageId", replyTo)
 	}
-	if subject := msg.Header.Get("subject"); subject != "RE: ACME: dmlxbmw5d2xjT05zWVFGNw" {
-		t.Errorf("expected subject to be %q, got %q", "RE: ACME: dmlxbmw5d2xjT05zWVFGNw", subject)
+	if subject := msg.Header.Get("subject"); subject != "RE: ACME: V4nE8NhYh6edBpfQTg5qqQ" {
+		t.Errorf("expected subject to be %q, got %q", "RE: ACME: V4nE8NhYh6edBpfQTg5qqQ", subject)
 	}
 	if contentType := msg.Header.Get("content-type"); contentType != "text/plain" {
 		t.Errorf("expected content type to be %q, got %q", "text/plain", contentType)
@@ -66,11 +88,11 @@ func TestMailReplyChallengeResponse(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// validate the response
 	trimmed, _ := strings.CutPrefix(strings.TrimSpace(string(body)), "-----BEGIN ACME RESPONSE-----")
 	trimmed, _ = strings.CutSuffix(trimmed, "-----END ACME RESPONSE-----")
 	trimmed = strings.TrimSpace(trimmed)
-
-	if trimmed != "zPVRe74iorifByo5uXwIgNHOasxE2XHm84f3js1HVmE" {
-		t.Errorf("expected ACME challenge response to be %q, got %q", "zPVRe74iorifByo5uXwIgNHOasxE2XHm84f3js1HVmE", trimmed)
+	if trimmed != "Fjt2SD7KoqSt3I6jwgg8ljjkP9Er7h1w0wF0UihvQIU" {
+		t.Errorf("expected ACME challenge response to be %q, got %q", "Fjt2SD7KoqSt3I6jwgg8ljjkP9Er7h1w0wF0UihvQIU", trimmed)
 	}
 }

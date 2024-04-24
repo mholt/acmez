@@ -138,8 +138,13 @@ func (c Challenge) MailReply00KeyAuthorization(mailSubject string) (string, erro
 	if err != nil {
 		return "", fmt.Errorf("failed decoding token-part1: %w", err)
 	}
-	fullToken := string(tokenPart1) + c.Token
-	mailKeyAuth := strings.Replace(c.KeyAuthorization, c.Token, fullToken, 1)
+	tokenPart2, err := base64.RawURLEncoding.DecodeString(c.Token)
+	if err != nil {
+		return "", fmt.Errorf("failed decoding token-part2: %w", err)
+	}
+	fullToken := append(tokenPart1, tokenPart2...)
+	encodedFullToken := base64.RawURLEncoding.EncodeToString(fullToken)
+	mailKeyAuth := strings.Replace(c.KeyAuthorization, c.Token, encodedFullToken, 1)
 	h := sha256.Sum256([]byte(mailKeyAuth))
 	return base64.RawURLEncoding.EncodeToString(h[:]), nil
 }
