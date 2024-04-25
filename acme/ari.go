@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/base64"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -60,6 +61,9 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 	if err := c.provision(ctx); err != nil {
 		return RenewalInfo{}, err
 	}
+	if c.dir.RenewalInfo == "" {
+		return RenewalInfo{}, fmt.Errorf("directory does not indicate ARI support (missing renewalInfo)")
+	}
 
 	var ari RenewalInfo
 	resp, err := c.httpReq(ctx, http.MethodGet, c.ariEndpoint(leafCert), nil, &ari)
@@ -79,7 +83,7 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 // ariEndpoint returns the ARI endpoint URI for the given certificate
 // according to the configured CA's directory.
 func (c *Client) ariEndpoint(leafCert *x509.Certificate) string {
-	if leafCert == nil || leafCert.SerialNumber == nil {
+	if c.dir.RenewalInfo == "" || leafCert == nil || leafCert.SerialNumber == nil {
 		return ""
 	}
 	return c.dir.RenewalInfo + "/" + ARIUniqueIdentifier(leafCert)
