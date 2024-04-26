@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"fmt"
 	"strings"
 )
 
@@ -130,15 +131,22 @@ func (c Challenge) DNS01KeyAuthorization() string {
 // The subject of that mail contains token-part1, which must be combined
 // with token-part2, which was received as part of the JSON challenge as
 // described in RFC8823 §3.1.
-func (c Challenge) MailReply00KeyAuthorization(mailsubject string) string {
+func (c Challenge) MailReply00KeyAuthorization(mailSubject string) (string, error) {
 	// if subject given has "ACME:" header, strip it before calculating the key authorization
-	mailsubject = strings.TrimPrefix(mailsubject, "ACME: ")
-	tokenP1, _ := base64.RawURLEncoding.DecodeString(mailsubject)
-	tokenP2, _ := base64.RawURLEncoding.DecodeString(c.Token)
-	tokenFull := base64.RawURLEncoding.EncodeToString(append(tokenP1, tokenP2...))
-	mailKeyAuth := strings.Replace(c.KeyAuthorization, c.Token, tokenFull, 1)
-	h := sha256.Sum256([]byte(mailsubject + mailKeyAuth))
-	return base64.RawURLEncoding.EncodeToString(h[:])
+	mailSubject = strings.TrimPrefix(mailSubject, "ACME: ")
+	tokenPart1, err := base64.RawURLEncoding.DecodeString(mailSubject)
+	if err != nil {
+		return "", fmt.Errorf("failed decoding token-part1: %w", err)
+	}
+	tokenPart2, err := base64.RawURLEncoding.DecodeString(c.Token)
+	if err != nil {
+		return "", fmt.Errorf("failed decoding token-part2: %w", err)
+	}
+	fullToken := append(tokenPart1, tokenPart2...)
+	encodedFullToken := base64.RawURLEncoding.EncodeToString(fullToken)
+	mailKeyAuth := strings.Replace(c.KeyAuthorization, c.Token, encodedFullToken, 1)
+	h := sha256.Sum256([]byte(mailKeyAuth))
+	return base64.RawURLEncoding.EncodeToString(h[:]), nil
 }
 
 // InitiateChallenge "indicates to the server that it is ready for the challenge
