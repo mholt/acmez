@@ -101,7 +101,11 @@ func (c *Client) ObtainCertificate(ctx context.Context, params OrderParameters) 
 		order.NotAfter = &params.NotAfter
 	}
 	if params.Replaces != nil {
-		order.Replaces = acme.ARIUniqueIdentifier(params.Replaces)
+		certID, err := acme.ARIUniqueIdentifier(params.Replaces)
+		if err != nil {
+			return nil, fmt.Errorf("invalid Replaces cert value: %v", err)
+		}
+		order.Replaces = certID
 	}
 
 	// prepare to retry the transaction multiple times if necessary
