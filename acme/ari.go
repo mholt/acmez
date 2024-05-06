@@ -110,6 +110,14 @@ func (ari RenewalInfo) HasWindow() bool {
 	return !ari.SuggestedWindow.Start.IsZero() && !ari.SuggestedWindow.End.IsZero()
 }
 
+// SameWindow returns true if this ARI has the same window as the ARI passed in.
+// Note that suggested windows can move in either direction, expand, or contract,
+// so this method compares both start and end values for exact equality.
+func (ari RenewalInfo) SameWindow(other RenewalInfo) bool {
+	return ari.SuggestedWindow.Start.Equal(other.SuggestedWindow.Start) &&
+		ari.SuggestedWindow.End.Equal(other.SuggestedWindow.End)
+}
+
 // GetRenewalInfo returns the ACME Renewal Information (ARI) for the certificate.
 // It fills in the Retry-After value, if present, onto the returned struct so
 // the caller can poll appropriately. If the ACME server does not support ARI,
