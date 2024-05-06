@@ -98,8 +98,8 @@ func (ari RenewalInfo) NeedsRefresh() bool {
 		return false
 	}
 	if ari.RetryAfter == nil {
-		// TODO: this seems like an unlikely condition, but we could be smart in its absence, like based on the window...
-		return false
+		// TODO: this seems like an unlikely condition, but we could be smart in its absence, like based on the window... play it safe for now though and just always be updating I guess
+		return true
 	}
 	return time.Now().After(*ari.RetryAfter)
 }
