@@ -126,7 +126,7 @@ func (c *Client) NewOrder(ctx context.Context, account Account, order Order) (Or
 		return order, err
 	}
 	if c.Logger != nil {
-		c.Logger.LogAttrs(ctx, LevelTrace, "creating order",
+		c.Logger.LogAttrs(ctx, slog.LevelDebug, "creating order",
 			slog.String("account", account.Location),
 			slog.Any("identifiers", order.identifierValues()))
 	}

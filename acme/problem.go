@@ -91,17 +91,6 @@ func (p Problem) Error() string {
 	return s
 }
 
-// MarshalLogObject satisfies the zapcore.ObjectMarshaler interface.
-// This allows problems to be serialized by the zap logger.
-// func (p Problem) MarshalLogObject(enc zapcore.ObjectEncoder) error {
-// 	enc.AddString("type", p.Type)
-// 	enc.AddString("title", p.Title)
-// 	enc.AddString("detail", p.Detail)
-// 	enc.AddString("instance", p.Instance)
-// 	enc.AddArray("subproblems", loggableSubproblems(p.Subproblems))
-// 	return nil
-// }
-
 func (p Problem) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("type", p.Type),
@@ -130,26 +119,6 @@ func (sp Subproblem) LogValue() slog.Value {
 		slog.String("identifier", sp.Identifier.Value),
 		slog.Any("subproblem", sp.Problem))
 }
-
-// MarshalLogObject satisfies the zapcore.ObjectMarshaler interface.
-// This allows subproblems to be serialized by the zap logger.
-// func (sp Subproblem) MarshalLogObject(enc zapcore.ObjectEncoder) error {
-// 	enc.AddString("identifier_type", sp.Identifier.Type)
-// 	enc.AddString("identifier", sp.Identifier.Value)
-// 	enc.AddObject("subproblem", sp.Problem)
-// 	return nil
-// }
-
-// type loggableSubproblems []Subproblem
-
-// MarshalLogArray satisfies the zapcore.ArrayMarshaler interface.
-// This allows a list of subproblems to be serialized by the zap logger.
-// func (ls loggableSubproblems) MarshalLogArray(enc zapcore.ArrayEncoder) error {
-// 	for _, sp := range ls {
-// 		enc.AppendObject(sp)
-// 	}
-// 	return nil
-// }
 
 // Standard token values for the "type" field of problems, as defined
 // in RFC 8555 §6.7: https://tools.ietf.org/html/rfc8555#section-6.7

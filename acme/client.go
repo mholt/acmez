@@ -35,8 +35,6 @@ import (
 	"time"
 )
 
-const LevelTrace = slog.Level(-8)
-
 // Client facilitates ACME client operations as defined by the spec.
 //
 // Because the client is synchronized for concurrent use, it should
@@ -72,7 +70,6 @@ type Client struct {
 	PollTimeout time.Duration
 
 	// An optional logger. Default: no logs
-	// Logger *zap.Logger
 	Logger *slog.Logger
 
 	mu     sync.Mutex // protects all unexported fields
