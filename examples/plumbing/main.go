@@ -48,7 +48,7 @@ func lowLevelExample() error {
 	// a context allows us to cancel long-running ops
 	ctx := context.Background()
 
-	// Logging is important - replace with your own zap logger
+	// Logging is important - replace with your own logger
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	// before you can get a cert, you'll need an account registered with

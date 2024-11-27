@@ -120,7 +120,6 @@ func (c *Client) GetCertificateChain(ctx context.Context, account Account, certU
 				}
 				ari, err := c.GetRenewalInfo(ctx, leafCert)
 				if err != nil && c.Logger != nil {
-					// c.Logger.Error("failed getting renewal information", zap.Error(err))
 					c.Logger.LogAttrs(ctx, slog.LevelError, "failed getting renewal information",
 						slog.Any("error", err))
 				}

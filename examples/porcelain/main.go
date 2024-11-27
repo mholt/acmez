@@ -48,7 +48,7 @@ func highLevelExample() error {
 	// A context allows us to cancel long-running ops
 	ctx := context.Background()
 
-	// Logging is important - replace with your own zap logger
+	// Logging is important - replace with your own logger
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	// A high-level client embeds a low-level client and makes

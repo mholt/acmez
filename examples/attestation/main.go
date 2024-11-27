@@ -137,7 +137,7 @@ func attestationExample(csr *x509.CertificateRequest) error {
 	// A context allows us to cancel long-running ops
 	ctx := context.Background()
 
-	// Logging is important - replace with your own zap logger
+	// Logging is important - replace with your own logger
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	// Before you can get a cert, you'll need an account registered with
