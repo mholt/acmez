@@ -23,10 +23,11 @@ import (
 	"crypto/x509"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 
-	"github.com/mholt/acmez/v2/acme"
-	"go.uber.org/zap"
+	"github.com/mholt/acmez/v3/acme"
 )
 
 // Run pebble (the ACME server) before running this example:
@@ -47,11 +48,8 @@ func lowLevelExample() error {
 	// a context allows us to cancel long-running ops
 	ctx := context.Background()
 
-	// Logging is important - replace with your own zap logger
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		return err
-	}
+	// Logging is important - replace with your own logger
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	// before you can get a cert, you'll need an account registered with
 	// the ACME CA - it also needs a private key and should obviously be

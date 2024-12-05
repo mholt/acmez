@@ -22,11 +22,12 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 
-	"github.com/mholt/acmez/v2"
-	"github.com/mholt/acmez/v2/acme"
-	"go.uber.org/zap"
+	"github.com/mholt/acmez/v3"
+	"github.com/mholt/acmez/v3/acme"
 )
 
 // Run pebble (the ACME server) before running this example:
@@ -47,11 +48,8 @@ func highLevelExample() error {
 	// A context allows us to cancel long-running ops
 	ctx := context.Background()
 
-	// Logging is important - replace with your own zap logger
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		return err
-	}
+	// Logging is important - replace with your own logger
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	// A high-level client embeds a low-level client and makes
 	// the ACME flow much easier, but with less flexibility

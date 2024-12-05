@@ -29,13 +29,13 @@ import (
 	"encoding/pem"
 	"fmt"
 	"log"
+	"log/slog"
 	"math/big"
 	"net/http"
 	"os"
 
-	"github.com/mholt/acmez/v2"
-	"github.com/mholt/acmez/v2/acme"
-	"go.uber.org/zap"
+	"github.com/mholt/acmez/v3"
+	"github.com/mholt/acmez/v3/acme"
 )
 
 const usage = `Usage: STTY=-icanon attestation <csr-file>
@@ -137,11 +137,8 @@ func attestationExample(csr *x509.CertificateRequest) error {
 	// A context allows us to cancel long-running ops
 	ctx := context.Background()
 
-	// Logging is important - replace with your own zap logger
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		return err
-	}
+	// Logging is important - replace with your own logger
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	// Before you can get a cert, you'll need an account registered with
 	// the ACME CA; it needs a private key which should obviously be
