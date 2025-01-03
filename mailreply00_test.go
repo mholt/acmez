@@ -38,7 +38,7 @@ func TestMailReplyChallengeResponse(t *testing.T) {
 	}
 	subject := "ACME: V4nE8NhYh6edBpfQTg5qqQ" // (raw) base64url encoded token-part1
 
-	// simulate decoding / (re)encoding logic to constuct key authorization
+	// simulate decoding / (re)encoding logic to construct key authorization
 	tp1, err := base64.RawURLEncoding.DecodeString("V4nE8NhYh6edBpfQTg5qqQ")
 	if err != nil {
 		t.Fatal(err)
