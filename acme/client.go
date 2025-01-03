@@ -63,7 +63,7 @@ type Client struct {
 	UserAgent string
 
 	// Delay between poll attempts. Only used if server
-	// does not supply a Retry-Afer header. Default: 250ms
+	// does not supply a Retry-After header. Default: 250ms
 	PollInterval time.Duration
 
 	// Maximum duration for polling. Default: 5m
