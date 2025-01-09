@@ -188,6 +188,12 @@ type DirectoryMeta struct {
 	Website                 string   `json:"website,omitempty"`
 	CAAIdentities           []string `json:"caaIdentities,omitempty"`
 	ExternalAccountRequired bool     `json:"externalAccountRequired,omitempty"`
+
+	// ACME profiles are an EXPERIMENTAL DRAFT feature and are subject to change. See:
+	// - https://letsencrypt.org/2025/01/09/acme-profiles/
+	// - https://datatracker.ietf.org/doc/draft-aaron-acme-profiles/
+	// The key is the profile name, and the value is a description.
+	Profiles map[string]string `json:"profiles,omitempty"`
 }
 
 // stack is a simple thread-safe stack.

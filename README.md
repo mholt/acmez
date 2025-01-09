@@ -34,6 +34,7 @@ In other words, the `acmez` package is **porcelain** while the `acme` package is
 	- [RFC 8737](https://www.rfc-editor.org/rfc/rfc8737.html) (tls-alpn-01 challenge)
 	- [RFC 8823](https://www.rfc-editor.org/rfc/rfc8823.html) (email-reply-00 challenge; S/MIME)
 - ACME Renewal Information (ARI) support ([draft-ietf-acme-ari-03](https://datatracker.ietf.org/doc/draft-ietf-acme-ari/))
+- ACME profiles ([draft-aaron-acme-profiles](https://datatracker.ietf.org/doc/draft-aaron-acme-profiles/))
 
 
 ## Install
