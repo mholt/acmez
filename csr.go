@@ -290,8 +290,11 @@ func createIdentifiersUsingCSR(csr *x509.CertificateRequest) ([]acme.Identifier,
 		// Extract TNAuthList Identifier
 		if ext.Id.Equal(oidExtensionTNAuthList) {
 			ids = append(ids, acme.Identifier{
-				Type:  "TNAuthList",
-				Value: base64.StdEncoding.EncodeToString(ext.Value),
+				Type: "TNAuthList",
+				// https://www.rfc-editor.org/rfc/rfc9448.html#section-3-2
+				// The TNAuthlist value will be base64url encoded
+				// with no padding characters.
+				Value: base64.RawURLEncoding.EncodeToString(ext.Value),
 			})
 		}
 		if ext.Id.Equal(oidExtensionSubjectAltName) {
