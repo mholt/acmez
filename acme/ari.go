@@ -157,6 +157,7 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 				c.Logger.LogAttrs(ctx, slog.LevelWarn, "error getting ARI response",
 					slog.Any("error", err),
 					slog.Int("attempt", i),
+					slog.String("cert_id", certID),
 					slog.Any("names", leafCert.DNSNames))
 			}
 			continue
