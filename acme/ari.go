@@ -210,8 +210,15 @@ func (c *Client) GetRenewalInfo(ctx context.Context, leafCert *x509.Certificate)
 	// https://github.com/aarongable/draft-acme-ari/issues/70
 	// We add 1 to the start time since we are dealing in seconds for
 	// simplicity, but the server may provide sub-second timestamps.
+	// We also try our best with invalid start/end values (see #40).
 	start, end := ari.SuggestedWindow.Start.Unix()+1, ari.SuggestedWindow.End.Unix()
-	ari.SelectedTime = time.Unix(rand.Int63n(end-start)+start, 0).UTC()
+	if end > start {
+		ari.SelectedTime = time.Unix(rand.Int63n(end-start)+start, 0).UTC()
+	} else if start > 0 {
+		ari.SelectedTime = time.Unix(start, 0).UTC()
+	} else if end > 0 {
+		ari.SelectedTime = time.Unix(end, 0).UTC()
+	}
 
 	if c.Logger != nil {
 		c.Logger.LogAttrs(ctx, slog.LevelInfo, "got renewal info",
