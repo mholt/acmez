@@ -133,9 +133,9 @@ func (c Challenge) DNS01KeyAuthorization() string {
 	return base64.RawURLEncoding.EncodeToString(h[:])
 }
 
-// DNSAcccount01TXTRecordName returns the name of the TXT record to create
+// DNSAccount01TXTRecordName returns the name of the TXT record to create
 // for solving the dns-account-01 challenge. §3.2
-func (Challenge) DNSAcccount01TXTRecordName(a Account) string {
+func (Challenge) DNSAccount01TXTRecordName(a Account) string {
 	acctURLhash := sha256.Sum256([]byte(a.Location))
 	truncAcctURLHash := acctURLhash[:10]
 	b32TruncAcctURLHash := base32.StdEncoding.EncodeToString(truncAcctURLHash)
