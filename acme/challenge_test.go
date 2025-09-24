@@ -29,19 +29,19 @@ func TestChallenge_DNSAccount01TXTRecordName(t *testing.T) {
 			name:       "standard account location",
 			account:    Account{Location: "https://acme-v02.api.letsencrypt.org/acme/acct/12345"},
 			identifier: Identifier{Type: "dns", Value: "example.com"},
-			expected:   "_lvrajhh53e27yh7f._acme_challenge.example.com",
+			expected:   "_lvrajhh53e27yh7f._acme-challenge.example.com",
 		},
 		{
 			name:       "different account location",
 			account:    Account{Location: "https://example.com/acme/account/67890"},
 			identifier: Identifier{Type: "dns", Value: "test.example.org"},
-			expected:   "_pbvtvcg2uxbmkni3._acme_challenge.test.example.org",
+			expected:   "_pbvtvcg2uxbmkni3._acme-challenge.test.example.org",
 		},
 		{
 			name:       "empty account location",
 			account:    Account{Location: ""},
 			identifier: Identifier{Type: "dns", Value: "sub.domain.net"},
-			expected:   "_4oymiquy7qobjgx3._acme_challenge.sub.domain.net",
+			expected:   "_4oymiquy7qobjgx3._acme-challenge.sub.domain.net",
 		},
 	}
 
