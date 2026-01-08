@@ -152,6 +152,10 @@ func (c *Client) ObtainCertificate(ctx context.Context, params OrderParameters) 
 				l := c.Logger
 				if haveAuthz {
 					l = l.With(slog.String("identifier", authz.IdentifierValue()))
+				} else {
+					// the problem is not linked to a specific identifier
+					// be verbose to help debugging
+					l = l.With(slog.Any("error", err))
 				}
 				l.Error("validating authorization",
 					slog.Any("problem", problem),
