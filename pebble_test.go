@@ -158,7 +158,7 @@ func newPebbleServer(t *testing.T, httpPort, tlsPort int) *httptest.Server {
 	}
 	ca := ca.New(logger, db, "", keyAlg, alternateRoots, chainLength, profiles)
 	va := va.New(logger, httpPort, tlsPort, true, "", db)
-	wfeImpl := wfe.New(logger, db, va, ca, true, false, 0, 0)
+	wfeImpl := wfe.New(logger, db, va, ca, nil, true, false, 0, 0)
 
 	s := httptest.NewUnstartedServer(wfeImpl.Handler())
 	s.StartTLS()
