@@ -57,3 +57,74 @@ func TestChallenge_DNSAccount01TXTRecordName(t *testing.T) {
 		})
 	}
 }
+
+func TestChallenge_DNSPersist01TXTRecordName(t *testing.T) {
+	tests := []struct {
+		name       string
+		identifier Identifier
+		expected   string
+	}{
+		{
+			name:       "apex domain",
+			identifier: Identifier{Type: "dns", Value: "example.com"},
+			expected:   "_validation-persist.example.com",
+		},
+		{
+			name:       "subdomain",
+			identifier: Identifier{Type: "dns", Value: "sub.example.com"},
+			expected:   "_validation-persist.sub.example.com",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			c := Challenge{Identifier: test.identifier}
+			got := c.DNSPersist01TXTRecordName()
+			if got != test.expected {
+				t.Errorf("DNSPersist01TXTRecordName() = %q, want %q", got, test.expected)
+			}
+		})
+	}
+}
+
+func TestChallenge_DNSPersist01TXTRecordValue(t *testing.T) {
+	account := Account{Location: "https://acme-v02.api.letsencrypt.org/acme/acct/12345"}
+
+	tests := []struct {
+		name       string
+		issuer     string
+		wildcard   bool
+		expected   string
+	}{
+		{
+			name:     "without wildcard",
+			issuer:   "letsencrypt.org",
+			wildcard: false,
+			expected: "letsencrypt.org; accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/12345",
+		},
+		{
+			name:     "with wildcard",
+			issuer:   "letsencrypt.org",
+			wildcard: true,
+			expected: "letsencrypt.org; accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/12345; policy=wildcard",
+		},
+		{
+			name:     "different issuer",
+			issuer:   "ca.example.net",
+			wildcard: false,
+			expected: "ca.example.net; accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/12345",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			c := Challenge{
+				Identifier: Identifier{Type: "dns", Value: "example.com"},
+			}
+			got := c.DNSPersist01TXTRecordValue(account, test.issuer, test.wildcard)
+			if got != test.expected {
+				t.Errorf("DNSPersist01TXTRecordValue() = %q, want %q", got, test.expected)
+			}
+		})
+	}
+}
