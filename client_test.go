@@ -36,6 +36,7 @@ import (
 	"encoding/asn1"
 	"errors"
 	"net"
+	"net/url"
 	"testing"
 
 	"github.com/mholt/acmez/v3/acme"
@@ -57,6 +58,15 @@ func marshalOtherName(t *testing.T, oid asn1.ObjectIdentifier, value interface{}
 		t.Fatal(err)
 	}
 	return asn1.RawValue{FullBytes: b}
+}
+
+func mustParseURL(t *testing.T, rawURL string) *url.URL {
+	t.Helper()
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return u
 }
 
 func mustMarshal(t *testing.T, val any) []byte {
@@ -172,6 +182,98 @@ func Test_validateOrderIdentifiers(t *testing.T) {
 							}),
 						},
 					},
+				},
+			},
+		},
+		{
+			name: "ok/single-uri",
+			args: args{
+				order: &acme.Order{
+					Identifiers: []acme.Identifier{
+						{Type: "uri", Value: "spiffe://example.com/service"},
+					},
+				},
+				csr: &x509.CertificateRequest{
+					URIs: []*url.URL{
+						mustParseURL(t, "spiffe://example.com/service"),
+					},
+				},
+			},
+		},
+		{
+			name: "fail/uri-not-in-order",
+			args: args{
+				order: &acme.Order{
+					Identifiers: []acme.Identifier{
+						{Type: "dns", Value: "a-dns.example.com"},
+					},
+				},
+				csr: &x509.CertificateRequest{
+					DNSNames: []string{"a-dns.example.com"},
+					URIs: []*url.URL{
+						mustParseURL(t, "spiffe://example.com/service"),
+					},
+				},
+			},
+			expErr: errors.New("number of identifiers in Order [{dns a-dns.example.com}] (1) does not match the number of identifiers extracted from CSR [{dns a-dns.example.com} {uri spiffe://example.com/service}] (2)"),
+		},
+		{
+			name: "fail/uri-different-from-order",
+			args: args{
+				order: &acme.Order{
+					Identifiers: []acme.Identifier{
+						{Type: "uri", Value: "spiffe://example.com/service"},
+					},
+				},
+				csr: &x509.CertificateRequest{
+					URIs: []*url.URL{
+						mustParseURL(t, "spiffe://example.com/other-service"),
+					},
+				},
+			},
+			expErr: errors.New("identifiers in Order [{uri spiffe://example.com/service}] do not match the identifiers extracted from CSR [{uri spiffe://example.com/other-service}]"),
+		},
+		{
+			name: "fail/duplicate-in-order-masks-mismatch",
+			args: args{
+				order: &acme.Order{
+					Identifiers: []acme.Identifier{
+						{Type: "dns", Value: "a-dns.example.com"},
+						{Type: "dns", Value: "a-dns.example.com"},
+					},
+				},
+				csr: &x509.CertificateRequest{
+					DNSNames: []string{"a-dns.example.com", "another-dns.example.com"},
+				},
+			},
+			expErr: errors.New("identifiers in Order [{dns a-dns.example.com} {dns a-dns.example.com}] do not match the identifiers extracted from CSR [{dns a-dns.example.com} {dns another-dns.example.com}]"),
+		},
+		{
+			name: "fail/duplicate-in-csr-masks-mismatch",
+			args: args{
+				order: &acme.Order{
+					Identifiers: []acme.Identifier{
+						{Type: "dns", Value: "a-dns.example.com"},
+						{Type: "dns", Value: "another-dns.example.com"},
+					},
+				},
+				csr: &x509.CertificateRequest{
+					DNSNames: []string{"a-dns.example.com", "a-dns.example.com"},
+				},
+			},
+			expErr: errors.New("identifiers in Order [{dns a-dns.example.com} {dns another-dns.example.com}] do not match the identifiers extracted from CSR [{dns a-dns.example.com} {dns a-dns.example.com}]"),
+		},
+		{
+			name: "ok/matching-duplicates",
+			args: args{
+				order: &acme.Order{
+					Identifiers: []acme.Identifier{
+						{Type: "dns", Value: "a-dns.example.com"},
+						{Type: "dns", Value: "a-dns.example.com"},
+					},
+				},
+				csr: &x509.CertificateRequest{
+					DNSNames: []string{"a-dns.example.com", "a-dns.example.com"},
 				},
 			},
 		},
