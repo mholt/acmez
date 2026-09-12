@@ -335,7 +335,6 @@ func createIdentifiersUsingCSR(csr *x509.CertificateRequest) ([]acme.Identifier,
 			if err != nil {
 				return nil, err
 			}
-			break
 		}
 	}
 
