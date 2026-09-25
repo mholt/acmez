@@ -6,7 +6,7 @@ require (
 	code.pfad.fr/check v1.1.0
 	github.com/letsencrypt/pebble/v2 v2.10.1
 	golang.org/x/crypto v0.57.0
-	golang.org/x/net v0.58.0
+	golang.org/x/net v0.59.0
 )
 
 require (
