@@ -185,6 +185,15 @@ func (c *Client) RevokeCertificate(ctx context.Context, account Account, cert *x
 		Reason:      reason,
 	}
 
+	// The account key is the documented default. Without this the nil signer
+	// reaches jwsEncodeJSON, which calls key.Public() on it and panics.
+	if certKey == nil {
+		certKey = account.PrivateKey
+	}
+	if certKey == nil {
+		return fmt.Errorf("no key to sign the revocation request with: neither a certificate key nor an account key was provided")
+	}
+
 	// "Revocation requests are different from other ACME requests in that
 	// they can be signed with either an account key pair or the key pair in
 	// the certificate." §7.6
