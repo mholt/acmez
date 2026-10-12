@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"time"
 )
 
@@ -193,23 +194,11 @@ func (c *Client) FinalizeOrder(ctx context.Context, account Account, order Order
 		CSR: base64.RawURLEncoding.EncodeToString(csrASN1DER),
 	}
 
-	resp, err := c.httpPostJWS(ctx, account.PrivateKey, account.Location, order.Finalize, body, &order)
+	// Submit the CSR. PollTimeout bounds only the polling that follows, so its
+	// clock starts after this request. §7.4
+	resp, err := c.finalizeOrder(ctx, account, &order, body)
 	if err != nil {
-		// "A request to finalize an order will result in error if the order is
-		// not in the 'ready' state.  In such cases, the server MUST return a
-		// 403 (Forbidden) error with a problem document of type
-		// 'orderNotReady'.  The client should then send a POST-as-GET request
-		// to the order resource to obtain its current state.  The status of the
-		// order will indicate what action the client should take (see below)."
-		// §7.4
-		var problem Problem
-		if errors.As(err, &problem) {
-			if problem.Type != ProblemTypeOrderNotReady {
-				return order, err
-			}
-		} else {
-			return order, err
-		}
+		return order, err
 	}
 
 	// unlike with accounts and authorizations, the spec isn't clear on whether
@@ -219,7 +208,8 @@ func (c *Client) FinalizeOrder(ctx context.Context, account Account, order Order
 		order.Location = newLocation
 	}
 
-	if finished, err := orderIsFinished(order); finished {
+	action, err := nextOrderAction(order)
+	if action == actionDone {
 		return order, err
 	}
 
@@ -243,7 +233,11 @@ func (c *Client) FinalizeOrder(ctx context.Context, account Account, order Order
 			return order, ctx.Err()
 		}
 
-		resp, err = c.httpPostJWS(ctx, account.PrivateKey, account.Location, order.Location, nil, &order)
+		if action == actionFinalize {
+			resp, err = c.finalizeOrder(ctx, account, &order, body)
+		} else {
+			resp, err = c.httpPostJWS(ctx, account.PrivateKey, account.Location, order.Location, nil, &order)
+		}
 		if err != nil {
 			return order, fmt.Errorf("polling order status: %w", err)
 		}
@@ -253,7 +247,7 @@ func (c *Client) FinalizeOrder(ctx context.Context, account Account, order Order
 			order.Location = newLocation
 		}
 
-		if finished, err := orderIsFinished(order); finished {
+		if action, err = nextOrderAction(order); action == actionDone {
 			return order, err
 		}
 	}
@@ -261,44 +255,73 @@ func (c *Client) FinalizeOrder(ctx context.Context, account Account, order Order
 	return order, fmt.Errorf("order took too long")
 }
 
-// orderIsFinished returns true if the order processing is complete,
-// regardless of success or failure. If this function returns true,
-// polling an order status should stop. If there is an error with the
-// order, an error will be returned. This function should be called
-// only after a request to finalize an order. See §7.4.
-func orderIsFinished(order Order) (bool, error) {
+// finalizeOrder submits the order's CSR and, if the server answers with
+// "orderNotReady", fetches the order to obtain its current state. §7.4
+func (c *Client) finalizeOrder(ctx context.Context, account Account, order *Order, body any) (*http.Response, error) {
+	resp, err := c.httpPostJWS(ctx, account.PrivateKey, account.Location, order.Finalize, body, order)
+	if err == nil {
+		return resp, nil
+	}
+	// "A request to finalize an order will result in error if the order is
+	// not in the 'ready' state.  In such cases, the server MUST return a
+	// 403 (Forbidden) error with a problem document of type
+	// 'orderNotReady'.  The client should then send a POST-as-GET request
+	// to the order resource to obtain its current state." §7.4
+	var problem Problem
+	if errors.As(err, &problem) {
+		if problem.Type == ProblemTypeOrderNotReady {
+			return c.httpPostJWS(ctx, account.PrivateKey, account.Location, order.Location, nil, order)
+		}
+	}
+	return resp, err
+}
+
+// orderAction is the next thing to do with an order, as dictated by its
+// status. §7.4
+type orderAction int
+
+const (
+	// actionFinalize: the server is awaiting finalization.
+	actionFinalize orderAction = iota
+	// actionPoll: the certificate is being issued; poll the order.
+	actionPoll
+	// actionDone: the order is finished, successfully or not.
+	actionDone
+)
+
+// nextOrderAction returns the action the order's status calls for. §7.4
+func nextOrderAction(order Order) (orderAction, error) {
 	switch order.Status {
-	case StatusInvalid:
-		// "invalid": The certificate will not be issued.  Consider this
-		//      order process abandoned.
-		return true, fmt.Errorf("final order is invalid: %w", order.Error)
-
-	case StatusPending:
-		// "pending": The server does not believe that the client has
-		//      fulfilled the requirements.  Check the "authorizations" array for
-		//      entries that are still pending.
-		return true, fmt.Errorf("order pending, authorizations remaining: %v", order.Authorizations)
-
 	case StatusReady:
 		// "ready": The server agrees that the requirements have been
 		//      fulfilled, and is awaiting finalization.  Submit a finalization
 		//      request.
-		// (we did just submit a finalization request, so this is an error)
-		return true, fmt.Errorf("unexpected state: %s - order already finalized", order.Status)
+		return actionFinalize, nil
 
 	case StatusProcessing:
 		// "processing": The certificate is being issued.  Send a GET request
 		//      after the time given in the "Retry-After" header field of the
 		//      response, if any.
-		return false, nil
+		return actionPoll, nil
 
 	case StatusValid:
 		// "valid": The server has issued the certificate and provisioned its
 		//      URL to the "certificate" field of the order.  Download the
 		//      certificate.
-		return true, nil
+		return actionDone, nil
+
+	case StatusInvalid:
+		// "invalid": The certificate will not be issued.  Consider this
+		//      order process abandoned.
+		return actionDone, fmt.Errorf("final order is invalid: %w", order.Error)
+
+	case StatusPending:
+		// "pending": The server does not believe that the client has
+		//      fulfilled the requirements.  Check the "authorizations" array for
+		//      entries that are still pending.
+		return actionDone, fmt.Errorf("order pending, authorizations remaining: %v", order.Authorizations)
 
 	default:
-		return true, fmt.Errorf("unrecognized order status: %s", order.Status)
+		return actionDone, fmt.Errorf("unrecognized order status: %s", order.Status)
 	}
 }
