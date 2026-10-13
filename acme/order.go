@@ -155,12 +155,32 @@ func (c *Client) NewOrder(ctx context.Context, account Account, order Order) (Or
 			return order, fmt.Errorf("unknown profile name '%s'; supported profiles: %v", order.Profile, c.dir.Meta.Profiles)
 		}
 	}
-	resp, err := c.httpPostJWS(ctx, account.PrivateKey, account.Location, c.dir.NewOrder, order, &order)
+	resp, err := c.httpPostJWS(ctx, account.PrivateKey, account.Location, c.dir.NewOrder, orderPayload(order), &order)
 	if err != nil {
 		return order, err
 	}
 	order.Location = resp.Header.Get("Location")
 	return order, nil
+}
+
+// newOrderRequest is the new-order body from RFC 8555 section 7.4.
+// The server fills status, expires, authorizations, finalize, and certificate.
+type newOrderRequest struct {
+	Identifiers []Identifier `json:"identifiers"`
+	NotBefore   *time.Time   `json:"notBefore,omitempty"`
+	NotAfter    *time.Time   `json:"notAfter,omitempty"`
+	Profile     string       `json:"profile,omitempty"`
+	Replaces    string       `json:"replaces,omitempty"`
+}
+
+func orderPayload(order Order) any {
+	return newOrderRequest{
+		Identifiers: order.Identifiers,
+		NotBefore:   order.NotBefore,
+		NotAfter:    order.NotAfter,
+		Profile:     order.Profile,
+		Replaces:    order.Replaces,
+	}
 }
 
 // GetOrder retrieves an order from the server. The Order's Location field must be populated.
