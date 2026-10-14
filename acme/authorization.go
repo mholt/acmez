@@ -181,13 +181,21 @@ func (c *Client) PollAuthorization(ctx context.Context, account Account, authz A
 		}
 	}
 
-	for time.Since(start) < maxDuration {
+	for {
+		remaining := maxDuration - time.Since(start)
+		if remaining <= 0 {
+			break
+		}
+
+		if interval > remaining {
+			interval = remaining
+		}
+
 		select {
 		case <-time.After(interval):
 		case <-ctx.Done():
 			return authz, ctx.Err()
 		}
-
 		// get the latest authz object
 		resp, err := c.httpPostJWS(ctx, account.PrivateKey, account.Location, authz.Location, nil, &authz)
 		if err != nil {
